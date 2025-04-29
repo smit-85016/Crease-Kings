@@ -5,7 +5,7 @@ import * as React from 'react';
 import Image from 'next/image'; // Import next/image
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, X } from 'lucide-react'; // Removed Filter icon
+import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -14,14 +14,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs components
-import { Badge } from '@/components/ui/badge'; // Import Badge component
-import { ScrollArea } from '@/components/ui/scroll-area'; // Import ScrollArea
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
+import InitialLoadingSpinner from '@/components/layout/InitialLoadingSpinner'; // Import the new spinner
 
-// Updated Custom Cricket Logo SVG
+// Custom Cricket Logo SVG
 const CricketLogo = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -46,10 +47,14 @@ const CricketLogo = () => (
 
 // Define Sport Types
 const sportTypes = ['All', 'Cricket', 'Pickleball', 'Volleyball', 'Basketball', 'Badminton'];
+const SESSION_STORAGE_KEY = 'hasVisitedCreaseKingsHome';
 
 export default function Home() {
-  const [allGrounds, setAllGrounds] = useState<Ground[]>([]); // Store all fetched grounds
-  const [filteredGrounds, setFilteredGrounds] = useState<Ground[]>([]); // Grounds currently displayed
+  const [showInitialLoader, setShowInitialLoader] = useState(true); // Start with loader potentially showing
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false); // Track if initial animation is done
+
+  const [allGrounds, setAllGrounds] = useState<Ground[]>([]);
+  const [filteredGrounds, setFilteredGrounds] = useState<Ground[]>([]);
   const [selectedGround, setSelectedGround] = useState<Ground | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -60,23 +65,37 @@ export default function Home() {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
-  const [selectedSport, setSelectedSport] = useState<string>('Cricket'); // Default to Cricket as per current data
+  const [selectedSport, setSelectedSport] = useState<string>('Cricket');
   const { toast } = useToast();
 
-  // Fetch grounds on initial load
+  // Effect for initial loading animation
   useEffect(() => {
+    const hasVisited = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!hasVisited) {
+      setShowInitialLoader(true);
+      // Show loader for 2.5 seconds on first visit
+      const timer = setTimeout(() => {
+        setShowInitialLoader(false);
+        setIsInitialLoadComplete(true);
+        sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
+      }, 2500);
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    } else {
+      setShowInitialLoader(false); // Don't show loader if already visited
+      setIsInitialLoadComplete(true); // Mark as complete immediately
+    }
+  }, []);
+
+  // Fetch grounds only after initial load animation is potentially complete
+  useEffect(() => {
+    if (!isInitialLoadComplete) return; // Don't fetch if initial load isn't done
+
     async function fetchGrounds() {
       try {
         setLoadingGrounds(true);
         const fetchedGrounds = await getGrounds();
         setAllGrounds(fetchedGrounds);
-        // Initial filter based on default selected sport
-        if (selectedSport === 'All') {
-             setFilteredGrounds(fetchedGrounds);
-        } else {
-             // Filter grounds by the selected sport type
-             setFilteredGrounds(fetchedGrounds.filter(g => g.sportType === selectedSport));
-        }
+        // Initial filter applied after fetching
       } catch (error) {
         console.error('Failed to fetch grounds:', error);
         toast({
@@ -89,51 +108,57 @@ export default function Home() {
       }
     }
     fetchGrounds();
-  }, [toast]); // Run only once initially
+  }, [isInitialLoadComplete, toast]); // Depend on initial load completion
 
-  // Filter grounds when selectedSport changes
+  // Filter grounds when selectedSport or allGrounds change (after initial load)
   useEffect(() => {
-    setLoadingGrounds(true); // Show loading state while filtering
+     if (!isInitialLoadComplete) return; // Don't filter if initial load isn't done
+
+    setLoadingGrounds(true); // Show loading state while filtering/loading
+    const groundsToFilter = allGrounds; // Use the fetched grounds
+
     if (selectedSport === 'All') {
-      setFilteredGrounds(allGrounds);
+      setFilteredGrounds(groundsToFilter);
     } else {
-        setFilteredGrounds(allGrounds.filter(ground => ground.sportType === selectedSport));
+        setFilteredGrounds(groundsToFilter.filter(ground => ground.sportType === selectedSport));
     }
-     setSelectedGround(null); // Reset selected ground when filtering changes
-     setSelectedTimeSlot(null); // Reset selected time slot
-    // Simulate filtering delay if needed
-    setTimeout(() => setLoadingGrounds(false), 100); // Short delay for visual feedback
-  }, [selectedSport, allGrounds]);
+     setSelectedGround(null);
+     setSelectedTimeSlot(null);
+    // Only set loading false *if* grounds have been fetched initially
+    if (allGrounds.length > 0 || !loadingGrounds) {
+        setTimeout(() => setLoadingGrounds(false), 100); // Short delay for visual feedback if needed
+    }
+  }, [selectedSport, allGrounds, isInitialLoadComplete, loadingGrounds]); // Added loadingGrounds dependency
 
-  // Fetch time slots when ground or date changes
+  // Fetch time slots when ground or date changes (after initial load)
   useEffect(() => {
-    if (selectedGround && selectedDate) {
-      async function fetchTimeSlots() {
-        try {
-          setLoadingTimeSlots(true);
-          setTimeSlots([]); // Clear previous slots
-          setSelectedTimeSlot(null); // Reset selected slot
-          const dateString = format(selectedDate!, 'yyyy-MM-dd');
-          const fetchedTimeSlots = await getTimeSlots(selectedGround!.id, dateString);
-          setTimeSlots(fetchedTimeSlots);
-        } catch (error) {
-          console.error('Failed to fetch time slots:', error);
-          toast({
-            title: 'Error',
-            description: 'Could not fetch time slots for the selected ground and date.',
-            variant: 'destructive',
-          });
-        } finally {
-          setLoadingTimeSlots(false);
-        }
+    if (!isInitialLoadComplete || !selectedGround || !selectedDate) return;
+
+    async function fetchTimeSlots() {
+      try {
+        setLoadingTimeSlots(true);
+        setTimeSlots([]);
+        setSelectedTimeSlot(null);
+        const dateString = format(selectedDate!, 'yyyy-MM-dd');
+        const fetchedTimeSlots = await getTimeSlots(selectedGround!.id, dateString);
+        setTimeSlots(fetchedTimeSlots);
+      } catch (error) {
+        console.error('Failed to fetch time slots:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not fetch time slots for the selected ground and date.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoadingTimeSlots(false);
       }
-      fetchTimeSlots();
     }
-  }, [selectedGround, selectedDate, toast]);
+    fetchTimeSlots();
+  }, [selectedGround, selectedDate, isInitialLoadComplete, toast]);
 
   const handleSelectGround = (ground: Ground) => {
     setSelectedGround(ground);
-    setSelectedTimeSlot(null); // Reset time slot when ground changes
+    setSelectedTimeSlot(null);
   };
 
   const handleSelectTimeSlot = (slot: TimeSlot) => {
@@ -143,7 +168,6 @@ export default function Home() {
   };
 
   const handleBooking = async () => {
-    // Basic validation for payment details
     if (!cardNumber || !expiryDate || !cvc) {
        toast({
          title: 'Payment Error',
@@ -165,10 +189,6 @@ export default function Home() {
     setIsBooking(true);
     try {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      // In a real app, payment processing would happen here before confirming the booking
-      console.log('Processing payment with card:', cardNumber, expiryDate, cvc);
-
-      // Pass payment details to the booking function (optional, as per service function)
       const paymentDetails = { cardNumber, expiryDate, cvc };
 
       const success = await bookTimeSlot(
@@ -176,7 +196,7 @@ export default function Home() {
         dateString,
         selectedTimeSlot.startTime,
         selectedTimeSlot.endTime,
-        paymentDetails // Pass payment details here
+        paymentDetails
       );
 
       if (success) {
@@ -185,11 +205,9 @@ export default function Home() {
           description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}. Payment processed.`,
           variant: 'default',
         });
-        // Re-fetch time slots to update availability
         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
         setTimeSlots(updatedTimeSlots);
-        setSelectedTimeSlot(null); // Reset selection
-        // Clear payment fields after successful booking
+        setSelectedTimeSlot(null);
         setCardNumber('');
         setExpiryDate('');
         setCvc('');
@@ -212,23 +230,32 @@ export default function Home() {
     }
   };
 
-   // Basic validation for enabling the book button
    const isPaymentInfoValid = cardNumber.length >= 15 && expiryDate.match(/^\d{2}\/\d{2}$/) && cvc.length >= 3;
+
+   // Render initial loader if needed
+   if (showInitialLoader) {
+    return <InitialLoadingSpinner />;
+  }
+
+  // Render main content only after initial load animation is complete
+  if (!isInitialLoadComplete) {
+    return null; // Or a minimal placeholder if preferred
+  }
+
 
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
       {/* Header Section */}
       <header className="mb-6 text-center">
         <h1 className="text-4xl font-bold text-primary mb-2 flex items-center justify-center gap-2">
-           <CricketLogo /> {/* Use the custom logo component */}
-           Crease Kings {/* Updated App Name */}
+           <CricketLogo />
+           Crease Kings
         </h1>
-        <p className="text-muted-foreground">Find and book your perfect game spot</p> {/* Updated Quote */}
+        <p className="text-muted-foreground">Find and book your perfect game spot</p>
       </header>
 
       {/* Sport Type Filter Tabs */}
       <section className="mb-8 flex flex-col items-center">
-         {/* Removed the h2 heading for "Select Sport Type" */}
          <Tabs defaultValue={selectedSport} onValueChange={setSelectedSport} className="w-full max-w-lg">
              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
                  {sportTypes.map((sport) => (
@@ -255,9 +282,8 @@ export default function Home() {
                 </Badge>
             )}
           </h2>
-           {/* Scrollable Area for Grounds */}
-           <ScrollArea className="h-[60vh] md:h-auto md:flex-grow pr-3"> {/* Added ScrollArea */}
-             <div className="space-y-4"> {/* Added inner div */}
+           <ScrollArea className="h-[60vh] md:h-auto md:flex-grow pr-3">
+             <div className="space-y-4">
               {loadingGrounds ? (
                 <>
                   {[1, 2].map((_, index) => ( // Skeleton Loaders
@@ -280,19 +306,21 @@ export default function Home() {
                   <Card
                     key={ground.id}
                     className={cn(
-                      'cursor-pointer transition-all hover:shadow-lg overflow-hidden group', // Added group for hover effect
+                      'cursor-pointer transition-all hover:shadow-lg overflow-hidden group',
                       selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
                     )}
                     onClick={() => handleSelectGround(ground)}
                   >
                     {ground.imageUrl && (
-                      <div className="relative w-full aspect-[4/3] overflow-hidden"> {/* Added overflow-hidden */}
+                      <div className="relative w-full aspect-[4/3] overflow-hidden">
                         <Image
                           src={ground.imageUrl}
                           alt={`Image of ${ground.name}`}
-                          layout="fill"
-                          objectFit="cover"
+                          fill // Use fill instead of layout="fill"
+                          style={{objectFit:"cover"}} // Use style prop for objectFit
                           className="transition-transform duration-300 ease-in-out group-hover:scale-105"
+                          priority={filteredGrounds.indexOf(ground) < 3} // Prioritize loading images for the first few grounds
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes for responsive loading
                         />
                       </div>
                     )}
@@ -304,7 +332,6 @@ export default function Home() {
                       <CardDescription className="flex items-center gap-1 text-sm pt-1">
                         <MapPin className="h-4 w-4" /> {ground.location}
                       </CardDescription>
-                       {/* Display Sport Type Badge if relevant */}
                        {ground.sportType && (
                            <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
                         )}
@@ -325,7 +352,7 @@ export default function Home() {
 
         {/* Booking Section */}
         <section className="md:col-span-2 space-y-6">
-           <Card className={!selectedGround ? 'opacity-50 pointer-events-none' : 'shadow-md'}> {/* Added shadow */}
+           <Card className={cn('shadow-md', !selectedGround && 'opacity-50 pointer-events-none')}>
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-primary">
                 {selectedGround ? `Book ${selectedGround.name}` : 'Select a Ground to Book'}
@@ -383,8 +410,8 @@ export default function Home() {
                             onClick={() => handleSelectTimeSlot(slot)}
                             className={cn(
                               "flex-col h-auto py-2",
-                              slot.available ? 'cursor-pointer border-primary/50 hover:bg-accent/10 hover:border-primary' : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70', // Adjusted styles
-                              selectedTimeSlot?.startTime === slot.startTime && 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent' // Explicit border for selected
+                              slot.available ? 'cursor-pointer border-primary/50 hover:bg-accent/10 hover:border-primary' : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70',
+                              selectedTimeSlot?.startTime === slot.startTime && 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent'
                             )}
                             size="sm"
                           >
@@ -410,11 +437,11 @@ export default function Home() {
                          type="text"
                          placeholder="0000 0000 0000 0000"
                          value={cardNumber}
-                         onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19))} // Format card number
+                         onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19))}
                          disabled={isBooking}
                          required
-                         maxLength={19} // 16 digits + 3 spaces
-                         inputMode="numeric" // Hint for numeric keyboard on mobile
+                         maxLength={19}
+                         inputMode="numeric"
                        />
                      </div>
                      <div className="grid grid-cols-2 gap-4">
@@ -426,11 +453,11 @@ export default function Home() {
                            placeholder="MM/YY"
                            value={expiryDate}
                             onChange={(e) => {
-                              let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                              let value = e.target.value.replace(/\D/g, '');
                               if (value.length > 2) {
-                                value = value.slice(0, 2) + '/' + value.slice(2); // Add slash after MM
+                                value = value.slice(0, 2) + '/' + value.slice(2);
                               }
-                              setExpiryDate(value.slice(0, 5)); // Limit to MM/YY format
+                              setExpiryDate(value.slice(0, 5));
                             }}
                            disabled={isBooking}
                            required
@@ -445,10 +472,10 @@ export default function Home() {
                            type="text"
                            placeholder="123"
                            value={cvc}
-                           onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))} // Allow only digits
+                           onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
                            disabled={isBooking}
                            required
-                           maxLength={4} // CVC can be 3 or 4 digits
+                           maxLength={4}
                            inputMode="numeric"
                          />
                        </div>
