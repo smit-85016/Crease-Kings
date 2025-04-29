@@ -19,7 +19,7 @@ export default function BottomNavBar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border shadow-md flex items-center justify-around z-50 md:hidden"> {/* Hide on medium screens and up */}
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border shadow-md flex items-center justify-around z-50"> {/* Removed md:hidden */}
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
