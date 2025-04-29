@@ -41,7 +41,7 @@ const CricketLogo = () => (
     <path d="M10.94 10.94L6.44 15.44A2.5 2.5 0 0 0 6.44 19L10 22.56A2.5 2.5 0 0 0 13.56 22.56l4.5-4.5" /> {/* Blade */}
     <path d="M17.5 9.5L14.5 6.5" /> {/* Top of handle/grip */}
     {/* Cricket Ball */}
-    <circle cx="18" cy="6" r="3" fill="currentColor" stroke="none" /> {/* Filled ball */}
+    <circle cx="18" cy="6" r="3" fill="hsl(var(--accent))" stroke="none" /> {/* Filled ball */}
   </svg>
 );
 
@@ -65,7 +65,7 @@ export default function Home() {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
-  const [selectedSport, setSelectedSport] = useState<string>('Cricket');
+  const [selectedSport, setSelectedSport] = useState<string>('All'); // Default to 'All'
   const { toast } = useToast();
 
   // Effect for initial loading animation
@@ -95,7 +95,7 @@ export default function Home() {
         setLoadingGrounds(true);
         const fetchedGrounds = await getGrounds();
         setAllGrounds(fetchedGrounds);
-        // Initial filter applied after fetching
+        // Initial filter will be applied by the next effect
       } catch (error) {
         console.error('Failed to fetch grounds:', error);
         toast({
@@ -104,7 +104,7 @@ export default function Home() {
           variant: 'destructive',
         });
       } finally {
-        setLoadingGrounds(false);
+        // Loading state will be handled by the filter effect
       }
     }
     fetchGrounds();
@@ -124,15 +124,20 @@ export default function Home() {
     }
      setSelectedGround(null);
      setSelectedTimeSlot(null);
-    // Only set loading false *if* grounds have been fetched initially
-    if (allGrounds.length > 0 || !loadingGrounds) {
+    // Only set loading false *if* grounds have been fetched initially or filtering is done
+    if (allGrounds.length > 0 || !loadingGrounds || selectedSport) { // Adjusted condition
         setTimeout(() => setLoadingGrounds(false), 100); // Short delay for visual feedback if needed
     }
   }, [selectedSport, allGrounds, isInitialLoadComplete, loadingGrounds]); // Added loadingGrounds dependency
 
   // Fetch time slots when ground or date changes (after initial load)
   useEffect(() => {
-    if (!isInitialLoadComplete || !selectedGround || !selectedDate) return;
+    if (!isInitialLoadComplete || !selectedGround || !selectedDate) {
+        setTimeSlots([]); // Clear timeslots if no ground/date
+        setSelectedTimeSlot(null);
+        setLoadingTimeSlots(false);
+        return;
+    };
 
     async function fetchTimeSlots() {
       try {
@@ -205,6 +210,7 @@ export default function Home() {
           description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}. Payment processed.`,
           variant: 'default',
         });
+        // Refetch time slots to show updated availability
         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
         setTimeSlots(updatedTimeSlots);
         setSelectedTimeSlot(null);
@@ -217,6 +223,10 @@ export default function Home() {
            description: 'Could not complete the booking. The slot might be unavailable or payment failed. Please try again.',
            variant: 'destructive',
          });
+         // Optionally refetch time slots even on failure to ensure UI consistency
+         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
+         setTimeSlots(updatedTimeSlots);
+         setSelectedTimeSlot(null); // Clear selection if booking failed
       }
     } catch (error) {
       console.error('Booking failed:', error);
@@ -225,6 +235,13 @@ export default function Home() {
         description: 'An unexpected error occurred during booking. Please try again.',
         variant: 'destructive',
       });
+      // Optionally refetch time slots on error
+       if (selectedGround && selectedDate) {
+         const dateString = format(selectedDate, 'yyyy-MM-dd');
+         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
+         setTimeSlots(updatedTimeSlots);
+         setSelectedTimeSlot(null);
+       }
     } finally {
       setIsBooking(false);
     }
@@ -274,7 +291,7 @@ export default function Home() {
           <h2 className="text-2xl font-semibold text-primary flex items-center justify-between flex-shrink-0">
             <span>Available Grounds</span>
             {selectedSport !== 'All' && (
-                <Badge variant="secondary" className="text-sm font-normal">
+                <Badge variant="secondary" className="text-sm font-normal ml-2"> {/* Added margin */}
                  {selectedSport}
                  <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0 text-muted-foreground hover:text-foreground" onClick={() => setSelectedSport('All')}>
                     <X className="h-3 w-3" />
@@ -326,7 +343,8 @@ export default function Home() {
                     )}
                     <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
                       <CardTitle className="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                        {/* Simple icon placeholder - replace if specific icons per sport are needed */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
                         {ground.name}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-1 text-sm pt-1">
