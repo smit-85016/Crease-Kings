@@ -50,10 +50,10 @@ const initialFakeUser = {
 // Fake booking history data
 const fakeBookingHistory = [
   { id: 'bh001', groundName: 'Alpha Arena', date: '2024-07-10', time: '18:00 - 19:00', status: 'Completed', price: 1200 },
-  { id: 'bh002', groundName: 'Beta Box Park', date: '2024-06-25', time: '19:00 - 20:00', status: 'Completed', price: 1000 },
+  { id: 'bh002', groundName: 'Beta Box Park (Cricket)', date: '2024-06-25', time: '19:00 - 20:00', status: 'Completed', price: 1000 },
   { id: 'bh003', groundName: 'Gamma Cricket Hub', date: '2024-06-10', time: '17:00 - 18:00', status: 'Completed', price: 1150 },
   { id: 'bh004', groundName: 'Alpha Arena', date: '2024-05-20', time: '20:00 - 21:00', status: 'Completed', price: 1200 },
-  { id: 'bh005', groundName: 'Beta Box Park', date: '2024-07-25', time: '18:00 - 19:00', status: 'Upcoming', price: 1000 },
+  { id: 'bh005', groundName: 'Beta Box Park (Cricket)', date: '2024-07-25', time: '18:00 - 19:00', status: 'Upcoming', price: 1000 },
   { id: 'bh006', groundName: 'Gamma Cricket Hub', date: '2024-04-15', time: '16:00 - 17:00', status: 'Completed', price: 1150 },
   { id: 'bh007', groundName: 'Alpha Arena', date: '2024-03-30', time: '19:00 - 20:00', status: 'Completed', price: 1200 },
 ];
@@ -115,11 +115,12 @@ export default function ProfilePage() {
     // Handle Logout
     const handleLogout = () => {
         console.log('Logging out...');
-        // Remove the login flag from sessionStorage
+        // Remove the login flag and temporary credentials from sessionStorage
         if (typeof window !== 'undefined') {
             sessionStorage.removeItem('isLoggedIn');
-            sessionStorage.removeItem('tempUserEmail'); // Also clear temp creds if they exist
-            sessionStorage.removeItem('tempUserPassword');
+            sessionStorage.removeItem('tempUserEmail'); // Clear temp email
+            sessionStorage.removeItem('tempUserPassword'); // Clear temp password
+            console.log('Cleared isLoggedIn and temporary credentials from sessionStorage.');
             // Trigger storage event to update other tabs/components like BottomNavBar
              window.dispatchEvent(new Event('storage'));
         }

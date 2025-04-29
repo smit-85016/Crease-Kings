@@ -86,17 +86,19 @@ export default function LoginPage() {
     const hardcodedPassword = 'password';
 
     let loginSuccess = false;
+    let usedCredentialsType = 'none'; // Track which credentials worked
 
     // Check if submitted credentials match the temporarily stored ones from signup
     if (tempEmail && tempPassword && data.email === tempEmail && data.password === tempPassword) {
       loginSuccess = true;
+      usedCredentialsType = 'temporary';
       console.log('Logged in using temporary credentials from signup.');
       // Optionally clear temp creds after successful login for this session
-      // sessionStorage.removeItem('tempUserEmail');
-      // sessionStorage.removeItem('tempUserPassword');
+      // We will clear them on logout instead to allow re-login with temp creds if needed before logout
     } else if (data.email === hardcodedEmail && data.password === hardcodedPassword) {
-      // Fallback to hardcoded credentials if temp creds don't match or don't exist
+      // Fallback to hardcoded credentials if temp creds don't exist or don't match
       loginSuccess = true;
+      usedCredentialsType = 'hardcoded';
       console.log('Logged in using hardcoded credentials.');
     }
 
@@ -104,7 +106,7 @@ export default function LoginPage() {
     if (loginSuccess) {
       toast({
         title: 'Login Successful',
-        description: 'Welcome back!',
+        description: `Welcome back! Logged in via ${usedCredentialsType} credentials.`, // Info for debugging
       });
       // Set login flag in sessionStorage
       if (typeof window !== 'undefined') {
