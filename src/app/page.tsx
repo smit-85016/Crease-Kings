@@ -319,9 +319,9 @@ export default function Home() {
       </section>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Grounds Listing */}
-        <section className="md:col-span-1 space-y-4 flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Grounds Listing (Modified for less scrolling) */}
+        <section className="lg:col-span-1 space-y-4">
           <h2 className="text-2xl font-semibold text-primary flex items-center justify-between flex-shrink-0">
             <span>Available Grounds</span>
             {selectedSport !== 'All' && (
@@ -333,12 +333,13 @@ export default function Home() {
                 </Badge>
             )}
           </h2>
-           <ScrollArea className="h-[60vh] md:h-auto md:flex-grow pr-3">
-             <div className="space-y-4">
+           {/* Use ScrollArea on larger screens, simple div on smaller */}
+           <ScrollArea className="lg:h-[65vh] pr-3"> {/* Adjusted height for larger screens */}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4"> {/* Grid layout within scroll area */}
               {loadingGrounds ? (
                 <>
                  { console.log("Rendering Skeleton Loaders") }
-                  {[1, 2].map((_, index) => ( // Skeleton Loaders
+                  {[1, 2, 3, 4].map((_, index) => ( // Skeleton Loaders
                     <Card key={index} className="overflow-hidden">
                       <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
                         <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
@@ -373,27 +374,28 @@ export default function Home() {
                             fill // Use fill instead of layout="fill"
                             style={{objectFit:"cover"}} // Use style prop for objectFit
                             className="transition-transform duration-300 ease-in-out group-hover:scale-105"
-                            priority={filteredGrounds.indexOf(ground) < 3} // Prioritize loading images for the first few grounds
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes for responsive loading
+                            priority={filteredGrounds.indexOf(ground) < 4} // Prioritize loading images for the first few grounds
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1200px) 25vw, 20vw" // Adjust sizes for grid layout
                             />
                         </div>
                         )}
-                        <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardHeader className={!ground.imageUrl ? 'pt-6' : 'pb-2 pt-4'}> {/* Adjusted padding */}
+                        <CardTitle className="flex items-center gap-2 text-lg"> {/* Smaller title */}
                             {/* Simple icon placeholder - replace if specific icons per sport are needed */}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
                             {ground.name}
                         </CardTitle>
-                        <CardDescription className="flex items-center gap-1 text-sm pt-1">
-                            <MapPin className="h-4 w-4" /> {ground.location}
+                         <CardDescription className="flex items-center gap-1 text-xs pt-1"> {/* Smaller description */}
+                            <MapPin className="h-3 w-3" /> {ground.location}
                         </CardDescription>
-                        {ground.sportType && (
-                            <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
-                            )}
+
                         </CardHeader>
-                        <CardContent>
-                        <p className="flex items-center gap-1 font-semibold">
-                            <DollarSign className="h-4 w-4" /> {ground.pricePerHour} / hour
+                        <CardContent className="flex justify-between items-center pt-0 pb-3 px-4"> {/* Adjusted padding */}
+                            {ground.sportType && (
+                            <Badge variant="outline" className="text-xs">{ground.sportType}</Badge>
+                            )}
+                        <p className="flex items-center gap-1 font-semibold text-sm"> {/* Adjusted size */}
+                            <DollarSign className="h-3 w-3" /> {ground.pricePerHour} / hr
                         </p>
                         </CardContent>
                     </Card>
@@ -402,7 +404,7 @@ export default function Home() {
               ) : (
                  <>
                   { console.log("Rendering No Grounds Message") }
-                 <Card><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
+                 <Card className="md:col-span-2 lg:col-span-1"><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
                  </>
               )}
             </div>
@@ -410,8 +412,8 @@ export default function Home() {
         </section>
 
         {/* Booking Section */}
-        <section className="md:col-span-2 space-y-6">
-           <Card className={cn('shadow-md', !selectedGround && 'opacity-50 pointer-events-none')}>
+        <section className="lg:col-span-2 space-y-6">
+           <Card className={cn('shadow-md sticky top-4', !selectedGround && 'opacity-50 pointer-events-none')}> {/* Added sticky top */}
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-primary">
                 {selectedGround ? `Book ${selectedGround.name}` : 'Select a Ground to Book'}
