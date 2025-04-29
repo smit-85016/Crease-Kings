@@ -31,6 +31,7 @@ export interface Ground {
 
 /**
  * Represents a time slot.
+ * Note: This is currently unused in the home page after changes but kept for potential future use.
  */
 export interface TimeSlot {
   /**
@@ -49,29 +50,22 @@ export interface TimeSlot {
 
 /**
  * Represents payment details.
+ * Note: This is currently unused in the home page after changes but kept for potential future use.
  */
+/* // Removed as booking section is removed from home page
 export interface PaymentDetails {
-  /**
-   * Sanitized card number (e.g., only last 4 digits).
-   * In a real app, you wouldn't pass the full number like this.
-   * This is just for demonstration.
-   */
   cardNumber: string;
-  /**
-   * Card expiry date (e.g., "MM/YY").
-   */
   expiryDate: string;
-  /**
-   * Card Verification Code (CVC).
-   */
   cvc: string;
 }
+*/
 
 
 // Simulate API call delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Simulate a simple in-memory database for bookings
+// Note: This is currently unused in the home page after changes but kept for potential future use.
 const bookings = new Map<string, Set<string>>(); // Key: groundId-date, Value: Set of startTime
 
 // Updated Mock Grounds Data with sportType
@@ -158,6 +152,7 @@ export async function getGrounds(): Promise<Ground[]> {
 /**
  * Asynchronously retrieves available time slots for a given ground and date.
  * Simulates an API call and checks against mock bookings.
+ * Note: This is currently unused in the home page after changes but kept for potential future use.
  *
  * @param groundId The ID of the ground.
  * @param date The date for which to retrieve time slots (YYYY-MM-DD).
@@ -195,6 +190,7 @@ export async function getTimeSlots(groundId: string, date: string): Promise<Time
 /**
  * Asynchronously books a time slot for a given ground, date, and time.
  * Simulates an API call, including payment processing and booking confirmation.
+ * Note: This is currently unused in the home page after changes but kept for potential future use.
  *
  * @param groundId The ID of the ground.
  * @param date The date for which to book the time slot (YYYY-MM-DD).
@@ -203,32 +199,30 @@ export async function getTimeSlots(groundId: string, date: string): Promise<Time
  * @param paymentDetails Optional payment details for processing.
  * @returns A promise that resolves to a boolean indicating whether the booking was successful.
  */
+ /* // Removed as booking section is removed from home page
 export async function bookTimeSlot(
   groundId: string,
   date: string,
   startTime: string,
   endTime: string,
-  paymentDetails?: PaymentDetails // Optional payment details
+  paymentDetails?: PaymentDetails
 ): Promise<boolean> {
   await delay(1500); // Simulate longer latency for booking/payment
   console.log(`API Call: bookTimeSlot for ${groundId} on ${date} at ${startTime}-${endTime}`);
   if (paymentDetails) {
     console.log(` > Processing payment: Card ending ${paymentDetails.cardNumber.slice(-4)}, Expiry: ${paymentDetails.expiryDate}, CVC: ***`);
-    // Simulate payment success/failure (e.g., based on card number or randomly)
     const paymentSuccess = Math.random() > 0.1; // 90% success rate
     if (!paymentSuccess) {
       console.error(' > Payment Failed');
-      return false; // Payment failed
+      return false;
     }
     console.log(' > Payment Successful');
   } else {
     console.warn(' > Booking attempted without payment details.');
-    // For this example, let's assume payment is mandatory
-    // return false;
+    // return false; // Assuming payment is mandatory
   }
 
 
-  // Check availability again (race condition simulation)
    const bookingKey = `${groundId}-${date}`;
    const bookedSlots = bookings.get(bookingKey) || new Set<string>();
 
@@ -237,12 +231,10 @@ export async function bookTimeSlot(
      return false;
    }
 
-   // Add to bookings if successful
    bookedSlots.add(startTime);
    bookings.set(bookingKey, bookedSlots);
    console.log(` > Booking Confirmed: Slot ${startTime} on ${bookingKey}`);
 
-  // In a real app, send the booking request to your backend API
-  // The backend would handle payment processing (via Stripe, etc.) and database updates atomically.
-  return true; // Simulate successful booking
+  return true;
 }
+*/

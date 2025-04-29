@@ -4,22 +4,20 @@
 import * as React from 'react';
 import Image from 'next/image'; // Import next/image
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, X } from 'lucide-react';
+import { MapPin, DollarSign, Loader2, Image as ImageIcon, X } from 'lucide-react'; // Removed CalendarIcon, Clock, CreditCard
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+// Removed Calendar import
+// Removed Popover imports
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// Removed Input, Label imports related to payment
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // Import ScrollBar
 import { useToast } from '@/hooks/use-toast';
-import type { Ground, TimeSlot } from '@/services/ground-booking';
-import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
+import type { Ground } from '@/services/ground-booking'; // Removed TimeSlot import
+import { getGrounds } from '@/services/ground-booking'; // Removed getTimeSlots, bookTimeSlot imports
 import InitialLoadingSpinner from '@/components/layout/InitialLoadingSpinner'; // Import the new spinner
 
 // Custom Cricket Logo SVG
@@ -55,16 +53,8 @@ export default function Home() {
 
   const [allGrounds, setAllGrounds] = useState<Ground[]>([]);
   const [filteredGrounds, setFilteredGrounds] = useState<Ground[]>([]);
-  const [selectedGround, setSelectedGround] = useState<Ground | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+  // Removed booking-related state: selectedGround, selectedDate, timeSlots, selectedTimeSlot, loadingTimeSlots, isBooking, payment details
   const [loadingGrounds, setLoadingGrounds] = useState(true); // Start loading initially
-  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
-  const [isBooking, setIsBooking] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvc, setCvc] = useState('');
   const [selectedSport, setSelectedSport] = useState<string>('All'); // Default to 'All'
   const { toast } = useToast();
 
@@ -131,14 +121,9 @@ export default function Home() {
     console.log("Filtered grounds:", newlyFilteredGrounds);
     setFilteredGrounds(newlyFilteredGrounds);
 
-    // Reset selections when filter changes
-    if (selectedGround && !newlyFilteredGrounds.find(g => g.id === selectedGround.id)) {
-      setSelectedGround(null);
-    }
-    setSelectedTimeSlot(null);
+    // Removed selection reset logic as booking section is removed
 
     // Set loadingGrounds to false *after* filtering is done *and* the initial fetch has completed (indicated by allGrounds having data or explicitly not loading)
-    // This check ensures we don't set loading to false prematurely.
     if (allGrounds.length > 0 || !loadingGrounds || selectedSport) { // Check if data arrived or loading state was already false
         setLoadingGrounds(false);
         console.log("Set loadingGrounds to false after filtering.");
@@ -148,136 +133,13 @@ export default function Home() {
          console.log("Set loadingGrounds to false after filtering (no grounds found).");
     }
 
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSport, allGrounds, isInitialLoadComplete, showInitialLoader]); // Removed loadingGrounds dependency
+  }, [selectedSport, allGrounds, isInitialLoadComplete, showInitialLoader]);
 
 
-  // Fetch time slots when ground or date changes (after initial load)
-  useEffect(() => {
-    if (!isInitialLoadComplete || !selectedGround || !selectedDate) {
-        setTimeSlots([]); // Clear timeslots if no ground/date
-        setSelectedTimeSlot(null);
-        setLoadingTimeSlots(false);
-        return;
-    };
+  // Removed effect for fetching time slots
 
-    async function fetchTimeSlots() {
-      try {
-        setLoadingTimeSlots(true);
-        setTimeSlots([]);
-        setSelectedTimeSlot(null);
-        const dateString = format(selectedDate!, 'yyyy-MM-dd');
-        console.log(`Fetching time slots for ground ${selectedGround!.id} on ${dateString}`);
-        const fetchedTimeSlots = await getTimeSlots(selectedGround!.id, dateString);
-        console.log("Time slots fetched:", fetchedTimeSlots);
-        setTimeSlots(fetchedTimeSlots);
-      } catch (error) {
-        console.error('Failed to fetch time slots:', error);
-        toast({
-          title: 'Error',
-          description: 'Could not fetch time slots for the selected ground and date.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoadingTimeSlots(false);
-      }
-    }
-    fetchTimeSlots();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGround, selectedDate, isInitialLoadComplete, toast]);
-
-  const handleSelectGround = (ground: Ground) => {
-    setSelectedGround(ground);
-    setSelectedTimeSlot(null); // Clear selected time slot when ground changes
-  };
-
-  const handleSelectTimeSlot = (slot: TimeSlot) => {
-    if (slot.available) {
-      setSelectedTimeSlot(slot);
-    }
-  };
-
-  const handleBooking = async () => {
-    if (!cardNumber || !expiryDate || !cvc) {
-       toast({
-         title: 'Payment Error',
-         description: 'Please enter valid card details.',
-         variant: 'destructive',
-       });
-       return;
-     }
-
-    if (!selectedGround || !selectedDate || !selectedTimeSlot) {
-      toast({
-        title: 'Booking Error',
-        description: 'Please select a ground, date, and available time slot.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsBooking(true);
-    try {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const paymentDetails = { cardNumber, expiryDate, cvc };
-
-      console.log("Attempting booking:", { groundId: selectedGround.id, date: dateString, startTime: selectedTimeSlot.startTime, endTime: selectedTimeSlot.endTime });
-      const success = await bookTimeSlot(
-        selectedGround.id,
-        dateString,
-        selectedTimeSlot.startTime,
-        selectedTimeSlot.endTime,
-        paymentDetails
-      );
-
-      if (success) {
-        toast({
-          title: 'Booking Confirmed!',
-          description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}. Payment processed.`,
-          variant: 'default',
-          duration: 5000, // Show for 5 seconds
-        });
-        // Refetch time slots to show updated availability
-        const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
-        setTimeSlots(updatedTimeSlots);
-        setSelectedTimeSlot(null);
-        setCardNumber('');
-        setExpiryDate('');
-        setCvc('');
-      } else {
-         toast({
-           title: 'Booking Failed',
-           description: 'Could not complete the booking. The slot might be unavailable or payment failed. Please try again.',
-           variant: 'destructive',
-           duration: 5000,
-         });
-         // Optionally refetch time slots even on failure to ensure UI consistency
-         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
-         setTimeSlots(updatedTimeSlots);
-         setSelectedTimeSlot(null); // Clear selection if booking failed
-      }
-    } catch (error) {
-      console.error('Booking failed:', error);
-      toast({
-        title: 'Booking Failed',
-        description: 'An unexpected error occurred during booking. Please try again.',
-        variant: 'destructive',
-        duration: 5000,
-      });
-      // Optionally refetch time slots on error
-       if (selectedGround && selectedDate) {
-         const dateString = format(selectedDate, 'yyyy-MM-dd');
-         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
-         setTimeSlots(updatedTimeSlots);
-         setSelectedTimeSlot(null);
-       }
-    } finally {
-      setIsBooking(false);
-    }
-  };
-
-   const isPaymentInfoValid = cardNumber.length >= 15 && expiryDate.match(/^\d{2}\/\d{2}$/) && cvc.length >= 3;
+  // Removed handleSelectGround, handleSelectTimeSlot, handleBooking functions
 
    // Render initial loader if needed
    if (showInitialLoader) {
@@ -299,7 +161,7 @@ export default function Home() {
            <CricketLogo />
            Crease Kings
         </h1>
-        <p className="text-muted-foreground">Find and book your perfect game spot</p>
+        <p className="text-muted-foreground">Find your perfect game spot</p> {/* Updated description */}
       </header>
 
       {/* Sport Type Filter Tabs */}
@@ -318,14 +180,14 @@ export default function Home() {
          </Tabs>
       </section>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Grounds Listing (Modified for less scrolling) */}
-        <section className="lg:col-span-1 space-y-4">
+      {/* Main Content - Grounds Listing Only */}
+      <div className="w-full"> {/* Changed grid to full width container */}
+        {/* Grounds Listing */}
+        <section className="space-y-4"> {/* Removed lg:col-span-1 */}
           <h2 className="text-2xl font-semibold text-primary flex items-center justify-between flex-shrink-0">
             <span>Available Grounds</span>
             {selectedSport !== 'All' && (
-                <Badge variant="secondary" className="text-sm font-normal ml-2"> {/* Added margin */}
+                <Badge variant="secondary" className="text-sm font-normal ml-2">
                  {selectedSport}
                  <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0 text-muted-foreground hover:text-foreground" onClick={() => setSelectedSport('All')}>
                     <X className="h-3 w-3" />
@@ -333,13 +195,13 @@ export default function Home() {
                 </Badge>
             )}
           </h2>
-           {/* Use ScrollArea on larger screens, simple div on smaller */}
-           <ScrollArea className="lg:h-[65vh] pr-3"> {/* Adjusted height for larger screens */}
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4"> {/* Grid layout within scroll area */}
+           {/* Use ScrollArea (optional for long lists) or just display grid */}
+           {/* Removed height constraint from ScrollArea to show all grounds */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"> {/* Grid layout */}
               {loadingGrounds ? (
                 <>
                  { console.log("Rendering Skeleton Loaders") }
-                  {[1, 2, 3, 4].map((_, index) => ( // Skeleton Loaders
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((_, index) => ( // More Skeleton Loaders for wider layout
                     <Card key={index} className="overflow-hidden">
                       <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
                         <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
@@ -361,40 +223,38 @@ export default function Home() {
                     <Card
                         key={ground.id}
                         className={cn(
-                        'cursor-pointer transition-all hover:shadow-lg overflow-hidden group',
-                        selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
+                         'transition-all hover:shadow-lg overflow-hidden group'
+                         // Removed selectedGround state and related ring/border class
                         )}
-                        onClick={() => handleSelectGround(ground)}
+                        // Removed onClick handler
                     >
                         {ground.imageUrl && (
                         <div className="relative w-full aspect-[4/3] overflow-hidden">
                             <Image
                             src={ground.imageUrl}
                             alt={`Image of ${ground.name}`}
-                            fill // Use fill instead of layout="fill"
-                            style={{objectFit:"cover"}} // Use style prop for objectFit
+                            fill
+                            style={{objectFit:"cover"}}
                             className="transition-transform duration-300 ease-in-out group-hover:scale-105"
-                            priority={filteredGrounds.indexOf(ground) < 4} // Prioritize loading images for the first few grounds
-                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1200px) 25vw, 20vw" // Adjust sizes for grid layout
+                            priority={filteredGrounds.indexOf(ground) < 8} // Prioritize loading more images
+                            sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, (max-width: 1280px) 22vw, 18vw" // Adjusted sizes
                             />
                         </div>
                         )}
-                        <CardHeader className={!ground.imageUrl ? 'pt-6' : 'pb-2 pt-4'}> {/* Adjusted padding */}
-                        <CardTitle className="flex items-center gap-2 text-lg"> {/* Smaller title */}
-                            {/* Simple icon placeholder - replace if specific icons per sport are needed */}
+                        <CardHeader className={!ground.imageUrl ? 'pt-6' : 'pb-2 pt-4'}>
+                        <CardTitle className="flex items-center gap-2 text-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
                             {ground.name}
                         </CardTitle>
-                         <CardDescription className="flex items-center gap-1 text-xs pt-1"> {/* Smaller description */}
+                         <CardDescription className="flex items-center gap-1 text-xs pt-1">
                             <MapPin className="h-3 w-3" /> {ground.location}
                         </CardDescription>
-
                         </CardHeader>
-                        <CardContent className="flex justify-between items-center pt-0 pb-3 px-4"> {/* Adjusted padding */}
+                        <CardContent className="flex justify-between items-center pt-0 pb-3 px-4">
                             {ground.sportType && (
                             <Badge variant="outline" className="text-xs">{ground.sportType}</Badge>
                             )}
-                        <p className="flex items-center gap-1 font-semibold text-sm"> {/* Adjusted size */}
+                        <p className="flex items-center gap-1 font-semibold text-sm">
                             <DollarSign className="h-3 w-3" /> {ground.pricePerHour} / hr
                         </p>
                         </CardContent>
@@ -404,163 +264,15 @@ export default function Home() {
               ) : (
                  <>
                   { console.log("Rendering No Grounds Message") }
-                 <Card className="md:col-span-2 lg:col-span-1"><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
+                 {/* Ensure message spans across grid columns if needed */}
+                 <Card className="col-span-full"><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
                  </>
               )}
             </div>
-           </ScrollArea>
+           {/* </ScrollArea> */} {/* Removed ScrollArea or adjust usage */}
         </section>
 
-        {/* Booking Section */}
-        <section className="lg:col-span-2 space-y-6">
-           <Card className={cn('shadow-md sticky top-4', !selectedGround && 'opacity-50 pointer-events-none')}> {/* Added sticky top */}
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-primary">
-                {selectedGround ? `Book ${selectedGround.name}` : 'Select a Ground to Book'}
-              </CardTitle>
-               <CardDescription>
-                 {selectedGround ? 'Select a date, time slot, and enter payment details below.' : 'Choose a ground from the list on the left.'}
-               </CardDescription>
-            </CardHeader>
-            {selectedGround && (
-              <>
-                <CardContent className="space-y-6">
-                  {/* Date Selection */}
-                  <div>
-                    <Label htmlFor="date-picker" className="text-sm font-medium block mb-1">Select Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="date-picker"
-                          variant={'outline'}
-                          className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !selectedDate && 'text-muted-foreground'
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, 'PPP') : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          initialFocus
-                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))} // Disable past dates
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Time Slot Selection */}
-                  <div>
-                    <Label className="text-sm font-medium block mb-1">Available Time Slots</Label>
-                    {loadingTimeSlots ? (
-                      <div className="flex items-center text-muted-foreground">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading time slots...
-                      </div>
-                    ) : timeSlots.length > 0 ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {timeSlots.map((slot) => (
-                          <Button
-                            key={slot.startTime}
-                            variant={selectedTimeSlot?.startTime === slot.startTime ? 'default' : 'outline'}
-                            disabled={!slot.available || isBooking}
-                            onClick={() => handleSelectTimeSlot(slot)}
-                            className={cn(
-                              "flex-col h-auto py-2",
-                              slot.available ? 'cursor-pointer border-primary/50 hover:bg-accent/10 hover:border-primary' : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70',
-                              selectedTimeSlot?.startTime === slot.startTime && 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent'
-                            )}
-                            size="sm"
-                          >
-                            <span className="font-semibold">{slot.startTime}</span>
-                            <span className="text-xs">{slot.endTime}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No time slots available for this date.</p>
-                    )}
-                  </div>
-
-                  {/* Payment Method Section */}
-                  <div className="space-y-4 border-t pt-6">
-                     <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" /> Payment Details
-                     </h3>
-                     <div className="space-y-2">
-                       <Label htmlFor="cardNumber">Card Number</Label>
-                       <Input
-                         id="cardNumber"
-                         type="text"
-                         placeholder="0000 0000 0000 0000"
-                         value={cardNumber}
-                         onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19))}
-                         disabled={isBooking}
-                         required
-                         maxLength={19}
-                         inputMode="numeric"
-                       />
-                     </div>
-                     <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                         <Label htmlFor="expiryDate">Expiry Date</Label>
-                         <Input
-                           id="expiryDate"
-                           type="text"
-                           placeholder="MM/YY"
-                           value={expiryDate}
-                            onChange={(e) => {
-                              let value = e.target.value.replace(/\D/g, '');
-                              if (value.length > 2) {
-                                value = value.slice(0, 2) + '/' + value.slice(2);
-                              }
-                              setExpiryDate(value.slice(0, 5));
-                            }}
-                           disabled={isBooking}
-                           required
-                           maxLength={5}
-                            inputMode="numeric"
-                         />
-                       </div>
-                       <div className="space-y-2">
-                         <Label htmlFor="cvc">CVC</Label>
-                         <Input
-                           id="cvc"
-                           type="text"
-                           placeholder="123"
-                           value={cvc}
-                           onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))}
-                           disabled={isBooking}
-                           required
-                           maxLength={4}
-                           inputMode="numeric"
-                         />
-                       </div>
-                     </div>
-                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    onClick={handleBooking}
-                    disabled={!selectedTimeSlot || !isPaymentInfoValid || isBooking}
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                  >
-                    {isBooking ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Clock className="mr-2 h-4 w-4" />
-                    )}
-                    {isBooking ? 'Processing...' : `Book Now (${selectedGround.pricePerHour} for ${selectedTimeSlot?.startTime || '--:--'})`}
-                  </Button>
-                </CardFooter>
-              </>
-            )}
-          </Card>
-        </section>
+        {/* Booking Section - Removed */}
       </div>
     </main>
   );
