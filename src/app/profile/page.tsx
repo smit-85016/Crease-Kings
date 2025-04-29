@@ -1,12 +1,15 @@
 // src/app/profile/page.tsx
+'use client'; // Add use client directive for state management
+
 import * as React from 'react';
+import { useState } from 'react'; // Import useState
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Import Table components
-import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'; // Added ChevronDown, ChevronUp
 
 // Fake user data
 const fakeUser = {
@@ -28,11 +31,18 @@ const fakeBookingHistory = [
   { id: 'bh002', groundName: 'Beta Box Park', date: '2024-06-25', time: '19:00 - 20:00', status: 'Completed', price: 1000 },
   { id: 'bh003', groundName: 'Gamma Cricket Hub', date: '2024-06-10', time: '17:00 - 18:00', status: 'Completed', price: 1150 },
   { id: 'bh004', groundName: 'Alpha Arena', date: '2024-05-20', time: '20:00 - 21:00', status: 'Completed', price: 1200 },
-  { id: 'bh005', groundName: 'Beta Box Park', date: '2024-07-25', time: '18:00 - 19:00', status: 'Upcoming', price: 1000 }, // Example upcoming booking
+  { id: 'bh005', groundName: 'Beta Box Park', date: '2024-07-25', time: '18:00 - 19:00', status: 'Upcoming', price: 1000 },
+  { id: 'bh006', groundName: 'Gamma Cricket Hub', date: '2024-04-15', time: '16:00 - 17:00', status: 'Completed', price: 1150 },
+  { id: 'bh007', groundName: 'Alpha Arena', date: '2024-03-30', time: '19:00 - 20:00', status: 'Completed', price: 1200 },
 ];
 
+const INITIAL_HISTORY_COUNT = 3;
 
 export default function ProfilePage() {
+  const [showFullHistory, setShowFullHistory] = useState(false);
+
+  const displayedHistory = showFullHistory ? fakeBookingHistory : fakeBookingHistory.slice(0, INITIAL_HISTORY_COUNT);
+
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
       <Card className="max-w-3xl mx-auto shadow-lg overflow-hidden"> {/* Increased max-width */}
@@ -123,8 +133,8 @@ export default function ProfilePage() {
                    </TableRow>
                  </TableHeader>
                  <TableBody>
-                   {fakeBookingHistory.length > 0 ? (
-                     fakeBookingHistory.map((booking) => (
+                   {displayedHistory.length > 0 ? (
+                     displayedHistory.map((booking) => (
                        <TableRow key={booking.id}>
                           {/* Desktop View */}
                          <TableCell className="font-medium hidden sm:table-cell">{booking.groundName}</TableCell>
@@ -155,7 +165,26 @@ export default function ProfilePage() {
                  </TableBody>
                </Table>
             </div>
-              {/* Removed the "View Full Booking History" button */}
+             {/* See More / See Less Button */}
+             {fakeBookingHistory.length > INITIAL_HISTORY_COUNT && (
+                <div className="mt-4 text-center">
+                  <Button
+                    variant="link"
+                    onClick={() => setShowFullHistory(!showFullHistory)}
+                    className="text-primary hover:text-primary/80"
+                  >
+                    {showFullHistory ? (
+                       <>
+                         <ChevronUp className="mr-1 h-4 w-4" /> See Less
+                       </>
+                    ) : (
+                       <>
+                         <ChevronDown className="mr-1 h-4 w-4" /> See More ({fakeBookingHistory.length - INITIAL_HISTORY_COUNT} more)
+                       </>
+                    )}
+                  </Button>
+                </div>
+             )}
           </section>
 
           <Separator />
