@@ -5,7 +5,7 @@ import * as React from 'react';
 import Image from 'next/image'; // Import next/image
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, Filter, X } from 'lucide-react'; // Added Filter, X
+import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, X } from 'lucide-react'; // Removed Filter icon
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -228,9 +228,7 @@ export default function Home() {
 
       {/* Sport Type Filter Tabs */}
       <section className="mb-8 flex flex-col items-center">
-         <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Filter className="h-5 w-5 text-primary" /> Select Sport Type
-         </h2>
+         {/* Removed the h2 heading for "Select Sport Type" */}
          <Tabs defaultValue={selectedSport} onValueChange={setSelectedSport} className="w-full max-w-lg">
              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
                  {sportTypes.map((sport) => (
