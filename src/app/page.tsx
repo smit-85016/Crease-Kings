@@ -3,13 +3,15 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
@@ -23,6 +25,9 @@ export default function Home() {
   const [loadingGrounds, setLoadingGrounds] = useState(true);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
   const { toast } = useToast();
 
   // Fetch grounds on initial load
@@ -84,6 +89,16 @@ export default function Home() {
   };
 
   const handleBooking = async () => {
+    // Basic validation for payment details
+    if (!cardNumber || !expiryDate || !cvc) {
+       toast({
+         title: 'Payment Error',
+         description: 'Please enter valid card details.',
+         variant: 'destructive',
+       });
+       return;
+     }
+
     if (!selectedGround || !selectedDate || !selectedTimeSlot) {
       toast({
         title: 'Booking Error',
@@ -96,6 +111,9 @@ export default function Home() {
     setIsBooking(true);
     try {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
+      // In a real app, payment processing would happen here before confirming the booking
+      console.log('Processing payment with card:', cardNumber, expiryDate, cvc);
+
       const success = await bookTimeSlot(
         selectedGround.id,
         dateString,
@@ -106,13 +124,17 @@ export default function Home() {
       if (success) {
         toast({
           title: 'Booking Confirmed!',
-          description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}.`,
-          variant: 'default', // Use default variant which aligns with accent color for actions
+          description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}. Payment processed.`,
+          variant: 'default',
         });
         // Re-fetch time slots to update availability
         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
         setTimeSlots(updatedTimeSlots);
         setSelectedTimeSlot(null); // Reset selection
+        // Clear payment fields after successful booking
+        setCardNumber('');
+        setExpiryDate('');
+        setCvc('');
       } else {
         throw new Error('Booking failed on the server.');
       }
@@ -127,6 +149,9 @@ export default function Home() {
       setIsBooking(false);
     }
   };
+
+   // Basic validation for enabling the book button
+   const isPaymentInfoValid = cardNumber.length >= 15 && expiryDate.match(/^\d{2}\/\d{2}$/) && cvc.length >= 3;
 
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
@@ -186,17 +211,19 @@ export default function Home() {
                 {selectedGround ? `Book ${selectedGround.name}` : 'Select a Ground to Book'}
               </CardTitle>
                <CardDescription>
-                 {selectedGround ? 'Select a date and time slot below.' : 'Choose a ground from the list on the left.'}
+                 {selectedGround ? 'Select a date, time slot, and enter payment details below.' : 'Choose a ground from the list on the left.'}
                </CardDescription>
             </CardHeader>
             {selectedGround && (
               <>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                  {/* Date Selection */}
                   <div>
-                    <label className="text-sm font-medium block mb-1">Select Date</label>
+                    <Label htmlFor="date-picker" className="text-sm font-medium block mb-1">Select Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
+                          id="date-picker"
                           variant={'outline'}
                           className={cn(
                             'w-full justify-start text-left font-normal',
@@ -219,8 +246,9 @@ export default function Home() {
                     </Popover>
                   </div>
 
+                  {/* Time Slot Selection */}
                   <div>
-                    <label className="text-sm font-medium block mb-1">Available Time Slots</label>
+                    <Label className="text-sm font-medium block mb-1">Available Time Slots</Label>
                     {loadingTimeSlots ? (
                       <div className="flex items-center text-muted-foreground">
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading time slots...
@@ -249,11 +277,59 @@ export default function Home() {
                       <p className="text-sm text-muted-foreground">No time slots available for this date.</p>
                     )}
                   </div>
+
+                  {/* Payment Method Section */}
+                  <div className="space-y-4 border-t pt-6">
+                     <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" /> Payment Details
+                     </h3>
+                     <div className="space-y-2">
+                       <Label htmlFor="cardNumber">Card Number</Label>
+                       <Input
+                         id="cardNumber"
+                         type="text"
+                         placeholder="0000 0000 0000 0000"
+                         value={cardNumber}
+                         onChange={(e) => setCardNumber(e.target.value)}
+                         disabled={isBooking}
+                         required
+                         maxLength={19} // Allow for spaces
+                       />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                         <Label htmlFor="expiryDate">Expiry Date</Label>
+                         <Input
+                           id="expiryDate"
+                           type="text"
+                           placeholder="MM/YY"
+                           value={expiryDate}
+                           onChange={(e) => setExpiryDate(e.target.value)}
+                           disabled={isBooking}
+                           required
+                           maxLength={5}
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="cvc">CVC</Label>
+                         <Input
+                           id="cvc"
+                           type="text"
+                           placeholder="123"
+                           value={cvc}
+                           onChange={(e) => setCvc(e.target.value)}
+                           disabled={isBooking}
+                           required
+                           maxLength={4}
+                         />
+                       </div>
+                     </div>
+                   </div>
                 </CardContent>
                 <CardFooter>
                   <Button
                     onClick={handleBooking}
-                    disabled={!selectedTimeSlot || isBooking}
+                    disabled={!selectedTimeSlot || !isPaymentInfoValid || isBooking}
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   >
                     {isBooking ? (
@@ -261,7 +337,7 @@ export default function Home() {
                     ) : (
                       <Clock className="mr-2 h-4 w-4" />
                     )}
-                    {isBooking ? 'Booking...' : `Book Now (${selectedTimeSlot?.startTime || '--:--'})`}
+                    {isBooking ? 'Processing...' : `Book Now (${selectedGround.pricePerHour} for ${selectedTimeSlot?.startTime || '--:--'})`}
                   </Button>
                 </CardFooter>
               </>
