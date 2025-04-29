@@ -19,6 +19,11 @@ export interface Ground {
    */
   pricePerHour: number;
   /**
+   * The type of sport the ground is primarily for.
+   * Example values: 'Cricket', 'Pickleball', 'Volleyball', 'Basketball', 'Badminton'
+   */
+  sportType: string;
+  /**
    * Optional URL for the ground's image.
    */
   imageUrl?: string;
@@ -69,38 +74,85 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Simulate a simple in-memory database for bookings
 const bookings = new Map<string, Set<string>>(); // Key: groundId-date, Value: Set of startTime
 
+// Updated Mock Grounds Data with sportType
+const mockGrounds: Ground[] = [
+    {
+      id: 'ground-alpha-cricket',
+      name: 'Alpha Cricket Arena',
+      location: 'Downtown Core',
+      pricePerHour: 1200,
+      sportType: 'Cricket',
+      imageUrl: 'https://picsum.photos/seed/alpha_cricket/400/300',
+    },
+    {
+      id: 'ground-beta-cricket',
+      name: 'Beta Box Park (Cricket)',
+      location: 'West Suburbs',
+      pricePerHour: 1000,
+      sportType: 'Cricket',
+      imageUrl: 'https://picsum.photos/seed/beta_cricket/400/300',
+    },
+     {
+      id: 'ground-gamma-cricket',
+      name: 'Gamma Cricket Hub',
+      location: 'East Industrial',
+      pricePerHour: 1150,
+      sportType: 'Cricket',
+      imageUrl: 'https://picsum.photos/seed/gamma_cricket/400/300',
+    },
+    {
+      id: 'ground-delta-pickle',
+      name: 'Delta Pickleball Courts',
+      location: 'North Valley',
+      pricePerHour: 800,
+      sportType: 'Pickleball',
+      imageUrl: 'https://picsum.photos/seed/delta_pickle/400/300',
+    },
+    {
+      id: 'ground-epsilon-volley',
+      name: 'Epsilon Beach Volleyball',
+      location: 'South Beach',
+      pricePerHour: 950,
+      sportType: 'Volleyball',
+      imageUrl: 'https://picsum.photos/seed/epsilon_volley/400/300',
+    },
+    {
+      id: 'ground-zeta-basket',
+      name: 'Zeta Basketball Court',
+      location: 'City Center',
+      pricePerHour: 1100,
+      sportType: 'Basketball',
+      imageUrl: 'https://picsum.photos/seed/zeta_basket/400/300',
+    },
+     {
+      id: 'ground-eta-badminton',
+      name: 'Eta Badminton Hall',
+      location: 'Green Meadows',
+      pricePerHour: 750,
+      sportType: 'Badminton',
+      imageUrl: 'https://picsum.photos/seed/eta_badminton/400/300',
+    },
+     {
+      id: 'ground-theta-multi', // Example of a multi-sport venue if needed
+      name: 'Theta Sports Complex',
+      location: 'Airport Zone',
+      pricePerHour: 1500,
+      sportType: 'Cricket', // Primary type or needs better handling
+      imageUrl: 'https://picsum.photos/seed/theta_multi/400/300',
+    },
+];
+
+
 /**
  * Asynchronously retrieves a list of available box cricket grounds.
- * Simulates an API call.
+ * Simulates an API call returning diverse ground types.
  * @returns A promise that resolves to an array of Ground objects.
  */
 export async function getGrounds(): Promise<Ground[]> {
   await delay(500); // Simulate network latency
   console.log('API Call: getGrounds');
-  // In a real app, fetch this from your backend API
-  return [
-    {
-      id: 'ground-alpha',
-      name: 'Alpha Arena',
-      location: 'Downtown Core',
-      pricePerHour: 1200, // Example price in local currency unit (e.g., INR)
-      imageUrl: 'https://picsum.photos/seed/alpha/400/300', // Placeholder image
-    },
-    {
-      id: 'ground-beta',
-      name: 'Beta Box Park',
-      location: 'West Suburbs',
-      pricePerHour: 1000,
-      imageUrl: 'https://picsum.photos/seed/beta/400/300', // Placeholder image
-    },
-     {
-      id: 'ground-gamma',
-      name: 'Gamma Cricket Hub',
-      location: 'East Industrial',
-      pricePerHour: 1150,
-      imageUrl: 'https://picsum.photos/seed/gamma/400/300', // Placeholder image
-    },
-  ];
+  // In a real app, fetch this from your backend API, possibly with filtering options
+  return mockGrounds;
 }
 
 /**
@@ -120,7 +172,10 @@ export async function getTimeSlots(groundId: string, date: string): Promise<Time
 
    // Define potential slots for any ground (example)
    const potentialSlots: Omit<TimeSlot, 'available'>[] = [];
-   for (let hour = 8; hour < 22; hour++) { // Example: 8 AM to 10 PM
+   // Adjust hours based on potential ground type or just use a standard range
+   const startHourRange = 8;
+   const endHourRange = 22;
+   for (let hour = startHourRange; hour < endHourRange; hour++) {
      const startHour = hour.toString().padStart(2, '0');
      const endHour = (hour + 1).toString().padStart(2, '0');
      potentialSlots.push({ startTime: `${startHour}:00`, endTime: `${endHour}:00` });
@@ -144,7 +199,7 @@ export async function getTimeSlots(groundId: string, date: string): Promise<Time
  * @param groundId The ID of the ground.
  * @param date The date for which to book the time slot (YYYY-MM-DD).
  * @param startTime The start time of the time slot.
- * * @param endTime The end time of the time slot.
+ * @param endTime The end time of the time slot.
  * @param paymentDetails Optional payment details for processing.
  * @returns A promise that resolves to a boolean indicating whether the booking was successful.
  */
@@ -168,7 +223,7 @@ export async function bookTimeSlot(
     console.log(' > Payment Successful');
   } else {
     console.warn(' > Booking attempted without payment details.');
-    // Decide if booking without payment is allowed? For this example, let's fail it.
+    // For this example, let's assume payment is mandatory
     // return false;
   }
 

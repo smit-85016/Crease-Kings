@@ -1,10 +1,11 @@
+// src/app/page.tsx
 'use client';
 
 import * as React from 'react';
 import Image from 'next/image'; // Import next/image
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon, Filter, X } from 'lucide-react'; // Added Filter, X
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs components
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
@@ -37,15 +40,15 @@ const CricketLogo = () => (
     <path d="M17.5 9.5L14.5 6.5" /> {/* Top of handle/grip */}
     {/* Cricket Ball */}
     <circle cx="18" cy="6" r="3" fill="currentColor" stroke="none" /> {/* Filled ball */}
-    {/* Optional: Seam on the ball */}
-    {/* <path d="M16.5 4.5a4.24 4.24 0 0 1 0 3" />
-    <path d="M19.5 7.5a4.24 4.24 0 0 1 0 -3" /> */}
   </svg>
 );
 
+// Define Sport Types
+const sportTypes = ['All', 'Cricket', 'Pickleball', 'Volleyball', 'Basketball', 'Badminton'];
 
 export default function Home() {
-  const [grounds, setGrounds] = useState<Ground[]>([]);
+  const [allGrounds, setAllGrounds] = useState<Ground[]>([]); // Store all fetched grounds
+  const [filteredGrounds, setFilteredGrounds] = useState<Ground[]>([]); // Grounds currently displayed
   const [selectedGround, setSelectedGround] = useState<Ground | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -56,6 +59,7 @@ export default function Home() {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
+  const [selectedSport, setSelectedSport] = useState<string>('Cricket'); // Default to Cricket as per current data
   const { toast } = useToast();
 
   // Fetch grounds on initial load
@@ -64,7 +68,14 @@ export default function Home() {
       try {
         setLoadingGrounds(true);
         const fetchedGrounds = await getGrounds();
-        setGrounds(fetchedGrounds);
+        setAllGrounds(fetchedGrounds);
+        // Initial filter based on default selected sport
+        if (selectedSport === 'All') {
+             setFilteredGrounds(fetchedGrounds);
+        } else {
+             // Filter grounds by the selected sport type
+             setFilteredGrounds(fetchedGrounds.filter(g => g.sportType === selectedSport));
+        }
       } catch (error) {
         console.error('Failed to fetch grounds:', error);
         toast({
@@ -77,7 +88,21 @@ export default function Home() {
       }
     }
     fetchGrounds();
-  }, [toast]);
+  }, [toast]); // Run only once initially
+
+  // Filter grounds when selectedSport changes
+  useEffect(() => {
+    setLoadingGrounds(true); // Show loading state while filtering
+    if (selectedSport === 'All') {
+      setFilteredGrounds(allGrounds);
+    } else {
+        setFilteredGrounds(allGrounds.filter(ground => ground.sportType === selectedSport));
+    }
+     setSelectedGround(null); // Reset selected ground when filtering changes
+     setSelectedTimeSlot(null); // Reset selected time slot
+    // Simulate filtering delay if needed
+    setTimeout(() => setLoadingGrounds(false), 100); // Short delay for visual feedback
+  }, [selectedSport, allGrounds]);
 
   // Fetch time slots when ground or date changes
   useEffect(() => {
@@ -168,7 +193,6 @@ export default function Home() {
         setExpiryDate('');
         setCvc('');
       } else {
-        // Specific error for payment failure vs other booking failures if possible
          toast({
            title: 'Booking Failed',
            description: 'Could not complete the booking. The slot might be unavailable or payment failed. Please try again.',
@@ -192,22 +216,49 @@ export default function Home() {
 
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
-      <header className="mb-8 text-center">
+      {/* Header Section */}
+      <header className="mb-6 text-center">
         <h1 className="text-4xl font-bold text-primary mb-2 flex items-center justify-center gap-2">
            <CricketLogo /> {/* Use the custom logo component */}
            Crease Kings {/* Updated App Name */}
         </h1>
-        <p className="text-muted-foreground">Find and book your perfect box cricket ground</p>
+        <p className="text-muted-foreground">Find and book your perfect game spot</p> {/* Updated Quote */}
       </header>
 
+      {/* Sport Type Filter Tabs */}
+      <section className="mb-8 flex flex-col items-center">
+         <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Filter className="h-5 w-5 text-primary" /> Select Sport Type
+         </h2>
+         <Tabs defaultValue={selectedSport} onValueChange={setSelectedSport} className="w-full max-w-lg">
+             <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
+                 {sportTypes.map((sport) => (
+                     <TabsTrigger key={sport} value={sport} className="text-xs sm:text-sm px-2 py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                     {sport}
+                     </TabsTrigger>
+                 ))}
+             </TabsList>
+         </Tabs>
+      </section>
+
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Grounds Listing */}
         <section className="md:col-span-1 space-y-4">
-          <h2 className="text-2xl font-semibold text-primary">Available Grounds</h2>
+          <h2 className="text-2xl font-semibold text-primary flex items-center justify-between">
+            <span>Available Grounds</span>
+            {selectedSport !== 'All' && (
+                <Badge variant="secondary" className="text-sm font-normal">
+                 {selectedSport}
+                 <Button variant="ghost" size="icon" className="h-4 w-4 ml-1 p-0 text-muted-foreground hover:text-foreground" onClick={() => setSelectedSport('All')}>
+                    <X className="h-3 w-3" />
+                 </Button>
+                </Badge>
+            )}
+          </h2>
           {loadingGrounds ? (
             <div className="space-y-4">
-               {/* Skeleton Loader for Cards */}
-               {[1, 2].map((_, index) => (
+               {[1, 2].map((_, index) => ( // Skeleton Loaders
                  <Card key={index} className="overflow-hidden">
                    <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
                      <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
@@ -222,29 +273,28 @@ export default function Home() {
                  </Card>
                ))}
             </div>
-          ) : grounds.length > 0 ? (
-            grounds.map((ground) => (
+          ) : filteredGrounds.length > 0 ? (
+            filteredGrounds.map((ground) => (
               <Card
                 key={ground.id}
                 className={cn(
-                  'cursor-pointer transition-all hover:shadow-lg overflow-hidden', // Added overflow-hidden
+                  'cursor-pointer transition-all hover:shadow-lg overflow-hidden group', // Added group for hover effect
                   selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
                 )}
                 onClick={() => handleSelectGround(ground)}
               >
-                {/* Ground Image */}
                 {ground.imageUrl && (
-                  <div className="relative w-full aspect-[4/3]">
+                  <div className="relative w-full aspect-[4/3] overflow-hidden"> {/* Added overflow-hidden */}
                     <Image
                       src={ground.imageUrl}
                       alt={`Image of ${ground.name}`}
                       layout="fill"
-                      objectFit="cover" // Cover ensures the image fills the container
-                      className="transition-transform duration-300 ease-in-out group-hover:scale-105" // Example hover effect
+                      objectFit="cover"
+                      className="transition-transform duration-300 ease-in-out group-hover:scale-105"
                     />
                   </div>
                 )}
-                <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}> {/* Adjust padding if no image */}
+                <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
                   <CardTitle className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
                     {ground.name}
@@ -252,6 +302,10 @@ export default function Home() {
                   <CardDescription className="flex items-center gap-1 text-sm pt-1">
                     <MapPin className="h-4 w-4" /> {ground.location}
                   </CardDescription>
+                   {/* Display Sport Type Badge if relevant */}
+                   {ground.sportType && (
+                       <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
+                    )}
                 </CardHeader>
                 <CardContent>
                   <p className="flex items-center gap-1 font-semibold">
@@ -261,13 +315,13 @@ export default function Home() {
               </Card>
             ))
           ) : (
-             <Card><CardContent className="pt-6"><p>No grounds available at the moment.</p></CardContent></Card>
+             <Card><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
           )}
         </section>
 
         {/* Booking Section */}
         <section className="md:col-span-2 space-y-6">
-           <Card className={!selectedGround ? 'opacity-50 pointer-events-none' : ''}>
+           <Card className={!selectedGround ? 'opacity-50 pointer-events-none' : 'shadow-md'}> {/* Added shadow */}
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-primary">
                 {selectedGround ? `Book ${selectedGround.name}` : 'Select a Ground to Book'}
@@ -325,8 +379,8 @@ export default function Home() {
                             onClick={() => handleSelectTimeSlot(slot)}
                             className={cn(
                               "flex-col h-auto py-2",
-                              slot.available ? 'cursor-pointer border-primary hover:bg-accent/10' : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70',
-                              selectedTimeSlot?.startTime === slot.startTime && 'bg-accent text-accent-foreground hover:bg-accent/90'
+                              slot.available ? 'cursor-pointer border-primary/50 hover:bg-accent/10 hover:border-primary' : 'cursor-not-allowed bg-muted text-muted-foreground opacity-70', // Adjusted styles
+                              selectedTimeSlot?.startTime === slot.startTime && 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent' // Explicit border for selected
                             )}
                             size="sm"
                           >
