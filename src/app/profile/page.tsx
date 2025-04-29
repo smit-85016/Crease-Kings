@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { useState } from 'react'; // Import useState
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -65,6 +66,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false); // State for saving indicator
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for dialog open/close
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter for logout redirection
 
   const displayedHistory = showFullHistory ? fakeBookingHistory : fakeBookingHistory.slice(0, INITIAL_HISTORY_COUNT);
 
@@ -109,6 +111,25 @@ export default function ProfilePage() {
         description: 'Your profile details have been saved.',
     });
   };
+
+    // Handle Logout
+    const handleLogout = () => {
+        console.log('Logging out...');
+        // Remove the login flag from sessionStorage
+        if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('tempUserEmail'); // Also clear temp creds if they exist
+            sessionStorage.removeItem('tempUserPassword');
+            // Trigger storage event to update other tabs/components like BottomNavBar
+             window.dispatchEvent(new Event('storage'));
+        }
+        toast({
+            title: 'Logged Out',
+            description: 'You have been successfully logged out.',
+        });
+        // Redirect to login page
+        router.push('/login');
+    };
 
 
   return (
@@ -344,7 +365,7 @@ export default function ProfilePage() {
                 </Dialog>
 
                {/* Logout Button */}
-               <Button variant="destructive" className="flex-1">
+               <Button variant="destructive" className="flex-1" onClick={handleLogout}>
                  <LogOut className="mr-2 h-4 w-4" /> Logout
                </Button>
            </section>

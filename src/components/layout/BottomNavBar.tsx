@@ -8,8 +8,37 @@ import { Home, Mail, User, Settings, LogIn } from 'lucide-react'; // Added LogIn
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Placeholder for authentication status (replace with real auth check)
-const useAuth = () => ({ isAuthenticated: false }); // Assume not logged in for now
+// Simulated authentication hook checking sessionStorage
+const useAuth = () => {
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+    React.useEffect(() => {
+        // Check if the user is logged in based on sessionStorage flag
+        const loggedIn = typeof window !== 'undefined' ? sessionStorage.getItem('isLoggedIn') === 'true' : false;
+        setIsAuthenticated(loggedIn);
+
+        // Optional: Add event listener for storage changes if needed for cross-tab sync
+        const handleStorageChange = () => {
+             const loggedIn = typeof window !== 'undefined' ? sessionStorage.getItem('isLoggedIn') === 'true' : false;
+             setIsAuthenticated(loggedIn);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        // Also check on focus in case login happened in another tab
+        window.addEventListener('focus', handleStorageChange);
+
+        // Simulate initial check if needed (sometimes useEffect runs after initial paint)
+        handleStorageChange();
+
+
+        return () => {
+             window.removeEventListener('storage', handleStorageChange);
+             window.removeEventListener('focus', handleStorageChange);
+        };
+    }, []); // Empty dependency array ensures this runs once on mount and cleans up
+
+    return { isAuthenticated };
+};
 
 export default function BottomNavBar() {
   const pathname = usePathname();
@@ -27,11 +56,10 @@ export default function BottomNavBar() {
 
   const unauthNavItems = [
      { href: '/login', label: 'Login', icon: LogIn }, // Add login icon/link
-     // Optionally add signup link too, or handle via login page
   ];
 
 
-  // Determine which set of navigation items to show
+  // Determine which set of navigation items to show based on authentication
    const navItems = isAuthenticated
      ? [...baseNavItems, ...authNavItems]
      : [...baseNavItems, ...unauthNavItems];
@@ -50,13 +78,13 @@ export default function BottomNavBar() {
               className={cn(
                 'flex flex-col items-center justify-center h-full px-2 text-muted-foreground hover:text-primary hover:bg-transparent',
                  isActive && 'text-primary',
-                 // Adjust width distribution if more items are added
-                 navItems.length > 4 ? 'w-1/5' : 'w-1/4' // Simple width adjustment
+                 // Adjust width distribution based on number of items
+                 'flex-1 max-w-[25%]' // Ensure items distribute somewhat evenly
               )}
               aria-current={isActive ? 'page' : undefined}
             >
               <item.icon className="h-6 w-6 mb-1" />
-              <span className="text-xs">{item.label}</span>
+              <span className="text-xs text-center">{item.label}</span>
             </Button>
           </Link>
         );

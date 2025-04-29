@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogIn, Loader2, Mail, Lock } from 'lucide-react';
-// import { useRouter } from 'next/navigation'; // Import useRouter for redirection
+import { useRouter } from 'next/navigation'; // Import useRouter for redirection
 
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +62,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
-  // const router = useRouter(); // Initialize useRouter
+  const router = useRouter(); // Initialize useRouter
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -106,8 +106,14 @@ export default function LoginPage() {
         title: 'Login Successful',
         description: 'Welcome back!',
       });
+      // Set login flag in sessionStorage
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('isLoggedIn', 'true');
+         // Trigger a storage event manually for the current tab to react if needed
+         window.dispatchEvent(new Event('storage'));
+      }
       // Redirect user to home or dashboard
-      // router.push('/'); // Uncomment to redirect
+      router.push('/'); // Redirect to home page on successful login
     } else {
       toast({
         title: 'Login Failed',
@@ -116,6 +122,10 @@ export default function LoginPage() {
       });
       form.setError('email', { type: 'manual', message: ' ' }); // Add error to field for styling
       form.setError('password', { type: 'manual', message: 'Invalid email or password.' });
+       if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('isLoggedIn'); // Ensure flag is removed on failed login
+            window.dispatchEvent(new Event('storage')); // Trigger update
+       }
     }
 
     setIsLoading(false);
