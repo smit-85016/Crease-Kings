@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { UserPlus, Loader2, User, Mail, Lock } from 'lucide-react';
+// import { useRouter } from 'next/navigation'; // Import useRouter for redirection
 
 import { Button } from '@/components/ui/button';
 import {
@@ -67,6 +68,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
+  // const router = useRouter(); // Initialize useRouter
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -78,7 +80,7 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = async (data: SignupFormValues) => {
+ const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     console.log('Signup attempt:', { name: data.name, email: data.email }); // Don't log password
 
@@ -99,6 +101,17 @@ export default function SignupPage() {
         title: 'Signup Successful!',
         description: 'Your account has been created. Please log in.',
       });
+
+      // ---- Temporary Credential Storage for Simulation ----
+      // In a real app, you wouldn't do this. This is just to make
+      // the fake signup -> login flow work without a real backend.
+      if (typeof window !== 'undefined') {
+          sessionStorage.setItem('tempUserEmail', data.email);
+          sessionStorage.setItem('tempUserPassword', data.password);
+          console.log('Temporary credentials stored in sessionStorage.');
+      }
+      // ---- End of Temporary Credential Storage ----
+
       // Optionally redirect to login page
       // router.push('/login');
       form.reset(); // Clear form on success
@@ -106,6 +119,7 @@ export default function SignupPage() {
 
     setIsLoading(false);
   };
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary p-4">

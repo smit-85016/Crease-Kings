@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogIn, Loader2, Mail, Lock } from 'lucide-react';
+// import { useRouter } from 'next/navigation'; // Import useRouter for redirection
 
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +62,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
+  // const router = useRouter(); // Initialize useRouter
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -72,32 +74,53 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    console.log('Login attempt:', data);
+    console.log('Login attempt for email:', data.email); // Log only email
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Simulate login success/failure
-    // In a real app, you'd verify credentials against a backend
-    if (data.email === 'user@creasekings.fake' && data.password === 'password') {
+    // Check temporary credentials from sessionStorage first (for signup simulation)
+    const tempEmail = typeof window !== 'undefined' ? sessionStorage.getItem('tempUserEmail') : null;
+    const tempPassword = typeof window !== 'undefined' ? sessionStorage.getItem('tempUserPassword') : null;
+    const hardcodedEmail = 'user@creasekings.fake';
+    const hardcodedPassword = 'password';
+
+    let loginSuccess = false;
+
+    // Check if submitted credentials match the temporarily stored ones from signup
+    if (tempEmail && tempPassword && data.email === tempEmail && data.password === tempPassword) {
+      loginSuccess = true;
+      console.log('Logged in using temporary credentials from signup.');
+      // Optionally clear temp creds after successful login for this session
+      // sessionStorage.removeItem('tempUserEmail');
+      // sessionStorage.removeItem('tempUserPassword');
+    } else if (data.email === hardcodedEmail && data.password === hardcodedPassword) {
+      // Fallback to hardcoded credentials if temp creds don't match or don't exist
+      loginSuccess = true;
+      console.log('Logged in using hardcoded credentials.');
+    }
+
+    // Handle login result
+    if (loginSuccess) {
       toast({
         title: 'Login Successful',
         description: 'Welcome back!',
       });
-      // Redirect user to home or dashboard (using next/navigation)
-      // router.push('/');
+      // Redirect user to home or dashboard
+      // router.push('/'); // Uncomment to redirect
     } else {
       toast({
         title: 'Login Failed',
         description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
-         form.setError('email', { type: 'manual', message: ' ' }); // Add error to field for styling
-         form.setError('password', { type: 'manual', message: 'Invalid email or password.' });
+      form.setError('email', { type: 'manual', message: ' ' }); // Add error to field for styling
+      form.setError('password', { type: 'manual', message: 'Invalid email or password.' });
     }
 
     setIsLoading(false);
   };
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary p-4">
