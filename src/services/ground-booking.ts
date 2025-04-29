@@ -27,6 +27,26 @@ export interface Ground {
    * Optional URL for the ground's image.
    */
   imageUrl?: string;
+  /**
+  * Optional detailed description of the ground.
+  */
+  description?: string;
+  /**
+   * Optional list of amenities offered at the ground.
+   */
+  amenities?: string[];
+  /**
+   * Optional gallery of additional image URLs.
+   */
+  galleryUrls?: string[];
+  /**
+   * Optional contact phone number for the ground.
+   */
+  contactPhone?: string;
+  /**
+   * Optional rating for the ground (e.g., out of 5).
+   */
+  rating?: number;
 }
 
 /**
@@ -68,7 +88,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Note: This is currently unused in the home page after changes but kept for potential future use.
 const bookings = new Map<string, Set<string>>(); // Key: groundId-date, Value: Set of startTime
 
-// Updated Mock Grounds Data with sportType
+// Updated Mock Grounds Data with sportType, descriptions, amenities, etc.
 const mockGrounds: Ground[] = [
     {
       id: 'ground-alpha-cricket',
@@ -77,6 +97,15 @@ const mockGrounds: Ground[] = [
       pricePerHour: 1200,
       sportType: 'Cricket',
       imageUrl: 'https://picsum.photos/seed/alpha_cricket/400/300',
+      description: 'State-of-the-art indoor cricket facility with professional-grade turf and lighting. Perfect for competitive matches and practice sessions.',
+      amenities: ['Indoor Turf', 'Floodlights', 'Seating Area', 'Washrooms', 'Parking'],
+      galleryUrls: [
+        'https://picsum.photos/seed/alpha_cricket_gallery1/600/400',
+        'https://picsum.photos/seed/alpha_cricket_gallery2/600/400',
+        'https://picsum.photos/seed/alpha_cricket_gallery3/600/400',
+      ],
+      contactPhone: '+1 555-0101',
+      rating: 4.8,
     },
     {
       id: 'ground-beta-cricket',
@@ -85,6 +114,11 @@ const mockGrounds: Ground[] = [
       pricePerHour: 1000,
       sportType: 'Cricket',
       imageUrl: 'https://picsum.photos/seed/beta_cricket/400/300',
+      description: 'Spacious outdoor box cricket ground with nets on all sides. Ideal for casual games and evening play.',
+      amenities: ['Outdoor AstroTurf', 'Netting', 'Night Lights', 'Parking', 'Drinking Water'],
+      galleryUrls: ['https://picsum.photos/seed/beta_cricket_gallery1/600/400'],
+      contactPhone: '+1 555-0102',
+      rating: 4.5,
     },
      {
       id: 'ground-gamma-cricket',
@@ -93,6 +127,14 @@ const mockGrounds: Ground[] = [
       pricePerHour: 1150,
       sportType: 'Cricket',
       imageUrl: 'https://picsum.photos/seed/gamma_cricket/400/300',
+      description: 'Well-maintained cricket pitch suitable for practice and smaller matches. Features electronic scoring.',
+      amenities: ['Natural Grass', 'Electronic Scoring', 'Practice Nets', 'Washrooms'],
+      galleryUrls: [
+        'https://picsum.photos/seed/gamma_cricket_gallery1/600/400',
+        'https://picsum.photos/seed/gamma_cricket_gallery2/600/400',
+      ],
+      contactPhone: '+1 555-0103',
+      rating: 4.6,
     },
     {
       id: 'ground-delta-pickle',
@@ -101,6 +143,11 @@ const mockGrounds: Ground[] = [
       pricePerHour: 800,
       sportType: 'Pickleball',
       imageUrl: 'https://picsum.photos/seed/delta_pickle/400/300',
+      description: 'Dedicated pickleball courts with high-quality surface. Paddles and balls available for rent.',
+      amenities: ['Hard Courts', 'Equipment Rental', 'Seating', 'Parking'],
+       galleryUrls: ['https://picsum.photos/seed/delta_pickle_gallery1/600/400'],
+      contactPhone: '+1 555-0104',
+      rating: 4.7,
     },
     {
       id: 'ground-epsilon-volley',
@@ -109,6 +156,11 @@ const mockGrounds: Ground[] = [
       pricePerHour: 950,
       sportType: 'Volleyball',
       imageUrl: 'https://picsum.photos/seed/epsilon_volley/400/300',
+      description: 'Authentic beach volleyball experience right by the water. Perfect for sunny days.',
+      amenities: ['Sand Court', 'Beach Access', 'Showers', 'Cafe Nearby'],
+       galleryUrls: ['https://picsum.photos/seed/epsilon_volley_gallery1/600/400'],
+      contactPhone: '+1 555-0105',
+      rating: 4.4,
     },
     {
       id: 'ground-zeta-basket',
@@ -117,6 +169,11 @@ const mockGrounds: Ground[] = [
       pricePerHour: 1100,
       sportType: 'Basketball',
       imageUrl: 'https://picsum.photos/seed/zeta_basket/400/300',
+      description: 'Full-size indoor basketball court with adjustable hoops. Great for practice and pickup games.',
+      amenities: ['Indoor Hardwood', 'Adjustable Hoops', 'Scoreboard', 'Changing Rooms'],
+       galleryUrls: ['https://picsum.photos/seed/zeta_basket_gallery1/600/400'],
+      contactPhone: '+1 555-0106',
+      rating: 4.9,
     },
      {
       id: 'ground-eta-badminton',
@@ -125,14 +182,27 @@ const mockGrounds: Ground[] = [
       pricePerHour: 750,
       sportType: 'Badminton',
       imageUrl: 'https://picsum.photos/seed/eta_badminton/400/300',
+      description: 'Multiple badminton courts with excellent lighting and non-slip flooring.',
+      amenities: ['Wooden Courts', 'Good Lighting', 'Rental Rackets', 'Seating'],
+       galleryUrls: ['https://picsum.photos/seed/eta_badminton_gallery1/600/400'],
+      contactPhone: '+1 555-0107',
+      rating: 4.3,
     },
      {
       id: 'ground-theta-multi', // Example of a multi-sport venue if needed
       name: 'Theta Sports Complex',
       location: 'Airport Zone',
-      pricePerHour: 1500,
+      pricePerHour: 1500, // Higher price reflecting multi-sport nature
       sportType: 'Cricket', // Primary type or needs better handling
       imageUrl: 'https://picsum.photos/seed/theta_multi/400/300',
+      description: 'Large complex offering facilities for cricket, football, and more. Book specific areas as needed.',
+      amenities: ['Multiple Pitches', 'Changing Rooms', 'Large Parking', 'Snack Bar'],
+       galleryUrls: [
+          'https://picsum.photos/seed/theta_multi_gallery1/600/400',
+          'https://picsum.photos/seed/theta_multi_gallery2/600/400'
+        ],
+      contactPhone: '+1 555-0108',
+      rating: 4.7,
     },
 ];
 
@@ -148,6 +218,20 @@ export async function getGrounds(): Promise<Ground[]> {
   // In a real app, fetch this from your backend API, possibly with filtering options
   return mockGrounds;
 }
+
+/**
+ * Asynchronously retrieves details for a single ground by its ID.
+ * Simulates an API call.
+ * @param groundId The ID of the ground to retrieve.
+ * @returns A promise that resolves to the Ground object or null if not found.
+ */
+export async function getGroundById(groundId: string): Promise<Ground | null> {
+    await delay(300); // Simulate network latency for fetching details
+    console.log(`API Call: getGroundById for ${groundId}`);
+    const ground = mockGrounds.find(g => g.id === groundId);
+    return ground || null;
+}
+
 
 /**
  * Asynchronously retrieves available time slots for a given ground and date.

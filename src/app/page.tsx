@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import Image from 'next/image'; // Import next/image
+import Link from 'next/link'; // Import Link for navigation
 import { useState, useEffect } from 'react';
 import { MapPin, DollarSign, Loader2, Image as ImageIcon, X } from 'lucide-react'; // Removed CalendarIcon, Clock, CreditCard
 
@@ -220,45 +221,49 @@ export default function Home() {
                  <>
                  { console.log("Rendering Filtered Grounds:", filteredGrounds) }
                     {filteredGrounds.map((ground) => (
-                    <Card
-                        key={ground.id}
+                    <Link key={ground.id} href={`/grounds/${ground.id}`} passHref>
+                      <Card
                         className={cn(
-                         'transition-all hover:shadow-lg overflow-hidden group'
-                         // Removed selectedGround state and related ring/border class
+                          'transition-all hover:shadow-lg overflow-hidden group cursor-pointer h-full flex flex-col' // Added cursor-pointer, h-full, flex, flex-col
                         )}
-                        // Removed onClick handler
-                    >
+                      >
                         {ground.imageUrl && (
-                        <div className="relative w-full aspect-[4/3] overflow-hidden">
+                          <div className="relative w-full aspect-[4/3] overflow-hidden flex-shrink-0"> {/* Added flex-shrink-0 */}
                             <Image
-                            src={ground.imageUrl}
-                            alt={`Image of ${ground.name}`}
-                            fill
-                            style={{objectFit:"cover"}}
-                            className="transition-transform duration-300 ease-in-out group-hover:scale-105"
-                            priority={filteredGrounds.indexOf(ground) < 8} // Prioritize loading more images
-                            sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, (max-width: 1280px) 22vw, 18vw" // Adjusted sizes
+                              src={ground.imageUrl}
+                              alt={`Image of ${ground.name}`}
+                              fill
+                              style={{objectFit:"cover"}}
+                              className="transition-transform duration-300 ease-in-out group-hover:scale-105"
+                              priority={filteredGrounds.indexOf(ground) < 8} // Prioritize loading more images
+                              sizes="(max-width: 640px) 90vw, (max-width: 768px) 45vw, (max-width: 1024px) 30vw, (max-width: 1280px) 22vw, 18vw" // Adjusted sizes
                             />
-                        </div>
+                          </div>
                         )}
-                        <CardHeader className={!ground.imageUrl ? 'pt-6' : 'pb-2 pt-4'}>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
-                            {ground.name}
-                        </CardTitle>
-                         <CardDescription className="flex items-center gap-1 text-xs pt-1">
-                            <MapPin className="h-3 w-3" /> {ground.location}
-                        </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-between items-center pt-0 pb-3 px-4">
+                        <div className="flex flex-col flex-grow"> {/* Added flex container */}
+                          <CardHeader className={cn(
+                              'pb-2 pt-4 flex-grow', // Added flex-grow
+                              !ground.imageUrl ? 'pt-6' : ''
+                          )}>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned flex-shrink-0"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
+                              <span>{ground.name}</span> {/* Wrap name in span for potential ellipsis */}
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-1 text-xs pt-1">
+                              <MapPin className="h-3 w-3 flex-shrink-0" /> <span>{ground.location}</span>
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="flex justify-between items-center pt-0 pb-3 px-4 mt-auto flex-shrink-0"> {/* Added mt-auto, flex-shrink-0 */}
                             {ground.sportType && (
-                            <Badge variant="outline" className="text-xs">{ground.sportType}</Badge>
+                              <Badge variant="outline" className="text-xs">{ground.sportType}</Badge>
                             )}
-                        <p className="flex items-center gap-1 font-semibold text-sm">
-                            <DollarSign className="h-3 w-3" /> {ground.pricePerHour} / hr
-                        </p>
-                        </CardContent>
-                    </Card>
+                            <p className="flex items-center gap-1 font-semibold text-sm">
+                              <DollarSign className="h-3 w-3" /> {ground.pricePerHour} / hr
+                            </p>
+                          </CardContent>
+                        </div>
+                      </Card>
+                    </Link>
                     ))}
                  </>
               ) : (
