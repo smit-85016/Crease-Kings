@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
 
-// Custom Cricket Logo SVG
+// Updated Custom Cricket Logo SVG
 const CricketLogo = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -26,23 +26,20 @@ const CricketLogo = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.5" // Slightly thinner stroke
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="lucide lucide-cricket"
+    className="text-primary" // Use primary color
   >
-    {/* Cricket Bat */}
-    <path d="M10.15 17.37a2 2 0 0 1-1.5 1.13l-1.15.38a2 2 0 0 1-2.36-2.36l.38-1.15a2 2 0 0 1 1.13-1.5L17 10" />
-    <path d="m15 12 2-2" />
-    <path d="M7.5 10.5 10 8" />
-    <path d="M16.5 13.5 19 11" />
+    {/* Cricket Bat (More stylized) */}
+    <path d="M14.5 13.5L9.5 18.5" /> {/* Handle */}
+    <path d="M10.94 10.94L6.44 15.44A2.5 2.5 0 0 0 6.44 19L10 22.56A2.5 2.5 0 0 0 13.56 22.56l4.5-4.5" /> {/* Blade */}
+    <path d="M17.5 9.5L14.5 6.5" /> {/* Top of handle/grip */}
     {/* Cricket Ball */}
-    <circle cx="6" cy="18" r="2" />
-     {/* Stumps (simplified) */}
-    <line x1="18" y1="16" x2="18" y2="21" />
-    <line x1="20" y1="16" x2="20" y2="21" />
-    <line x1="22" y1="16" x2="22" y2="21" />
-    <line x1="18" y1="16" x2="22" y2="16" /> {/* Bails */}
+    <circle cx="18" cy="6" r="3" fill="currentColor" stroke="none" /> {/* Filled ball */}
+    {/* Optional: Seam on the ball */}
+    {/* <path d="M16.5 4.5a4.24 4.24 0 0 1 0 3" />
+    <path d="M19.5 7.5a4.24 4.24 0 0 1 0 -3" /> */}
   </svg>
 );
 
