@@ -18,6 +18,10 @@ export interface Ground {
    * The pricing per hour.
    */
   pricePerHour: number;
+  /**
+   * Optional URL for the ground's image.
+   */
+  imageUrl?: string;
 }
 
 /**
@@ -80,18 +84,21 @@ export async function getGrounds(): Promise<Ground[]> {
       name: 'Alpha Arena',
       location: 'Downtown Core',
       pricePerHour: 1200, // Example price in local currency unit (e.g., INR)
+      imageUrl: 'https://picsum.photos/seed/alpha/400/300', // Placeholder image
     },
     {
       id: 'ground-beta',
       name: 'Beta Box Park',
       location: 'West Suburbs',
       pricePerHour: 1000,
+      imageUrl: 'https://picsum.photos/seed/beta/400/300', // Placeholder image
     },
      {
       id: 'ground-gamma',
       name: 'Gamma Cricket Hub',
       location: 'East Industrial',
       pricePerHour: 1150,
+      imageUrl: 'https://picsum.photos/seed/gamma/400/300', // Placeholder image
     },
   ];
 }

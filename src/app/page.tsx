@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image'; // Import next/image
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, DollarSign, Clock, Loader2, CreditCard, Image as ImageIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -114,11 +115,15 @@ export default function Home() {
       // In a real app, payment processing would happen here before confirming the booking
       console.log('Processing payment with card:', cardNumber, expiryDate, cvc);
 
+      // Pass payment details to the booking function (optional, as per service function)
+      const paymentDetails = { cardNumber, expiryDate, cvc };
+
       const success = await bookTimeSlot(
         selectedGround.id,
         dateString,
         selectedTimeSlot.startTime,
-        selectedTimeSlot.endTime
+        selectedTimeSlot.endTime,
+        paymentDetails // Pass payment details here
       );
 
       if (success) {
@@ -136,13 +141,18 @@ export default function Home() {
         setExpiryDate('');
         setCvc('');
       } else {
-        throw new Error('Booking failed on the server.');
+        // Specific error for payment failure vs other booking failures if possible
+         toast({
+           title: 'Booking Failed',
+           description: 'Could not complete the booking. The slot might be unavailable or payment failed. Please try again.',
+           variant: 'destructive',
+         });
       }
     } catch (error) {
       console.error('Booking failed:', error);
       toast({
         title: 'Booking Failed',
-        description: 'Could not complete the booking. Please try again.',
+        description: 'An unexpected error occurred during booking. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -168,21 +178,46 @@ export default function Home() {
         <section className="md:col-span-1 space-y-4">
           <h2 className="text-2xl font-semibold text-primary">Available Grounds</h2>
           {loadingGrounds ? (
-            <div className="space-y-2">
-               <Card><CardHeader><CardTitle><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading grounds...</CardTitle></CardHeader></Card>
-               <Card><CardHeader><CardTitle><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading grounds...</CardTitle></CardHeader></Card>
+            <div className="space-y-4">
+               {/* Skeleton Loader for Cards */}
+               {[1, 2].map((_, index) => (
+                 <Card key={index} className="overflow-hidden">
+                   <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
+                     <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
+                   </div>
+                   <CardHeader>
+                     <CardTitle className="h-6 w-3/4 bg-muted rounded animate-pulse"></CardTitle>
+                     <CardDescription className="h-4 w-1/2 bg-muted rounded animate-pulse mt-1"></CardDescription>
+                   </CardHeader>
+                   <CardContent>
+                     <p className="h-5 w-1/3 bg-muted rounded animate-pulse"></p>
+                   </CardContent>
+                 </Card>
+               ))}
             </div>
           ) : grounds.length > 0 ? (
             grounds.map((ground) => (
               <Card
                 key={ground.id}
                 className={cn(
-                  'cursor-pointer transition-all hover:shadow-md',
+                  'cursor-pointer transition-all hover:shadow-lg overflow-hidden', // Added overflow-hidden
                   selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
                 )}
                 onClick={() => handleSelectGround(ground)}
               >
-                <CardHeader>
+                {/* Ground Image */}
+                {ground.imageUrl && (
+                  <div className="relative w-full aspect-[4/3]">
+                    <Image
+                      src={ground.imageUrl}
+                      alt={`Image of ${ground.name}`}
+                      layout="fill"
+                      objectFit="cover" // Cover ensures the image fills the container
+                      className="transition-transform duration-300 ease-in-out group-hover:scale-105" // Example hover effect
+                    />
+                  </div>
+                )}
+                <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}> {/* Adjust padding if no image */}
                   <CardTitle className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
                     {ground.name}
@@ -199,7 +234,7 @@ export default function Home() {
               </Card>
             ))
           ) : (
-             <Card><CardContent><p>No grounds available at the moment.</p></CardContent></Card>
+             <Card><CardContent className="pt-6"><p>No grounds available at the moment.</p></CardContent></Card>
           )}
         </section>
 
@@ -290,10 +325,11 @@ export default function Home() {
                          type="text"
                          placeholder="0000 0000 0000 0000"
                          value={cardNumber}
-                         onChange={(e) => setCardNumber(e.target.value)}
+                         onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19))} // Format card number
                          disabled={isBooking}
                          required
-                         maxLength={19} // Allow for spaces
+                         maxLength={19} // 16 digits + 3 spaces
+                         inputMode="numeric" // Hint for numeric keyboard on mobile
                        />
                      </div>
                      <div className="grid grid-cols-2 gap-4">
@@ -304,10 +340,17 @@ export default function Home() {
                            type="text"
                            placeholder="MM/YY"
                            value={expiryDate}
-                           onChange={(e) => setExpiryDate(e.target.value)}
+                            onChange={(e) => {
+                              let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                              if (value.length > 2) {
+                                value = value.slice(0, 2) + '/' + value.slice(2); // Add slash after MM
+                              }
+                              setExpiryDate(value.slice(0, 5)); // Limit to MM/YY format
+                            }}
                            disabled={isBooking}
                            required
                            maxLength={5}
+                            inputMode="numeric"
                          />
                        </div>
                        <div className="space-y-2">
@@ -317,10 +360,11 @@ export default function Home() {
                            type="text"
                            placeholder="123"
                            value={cvc}
-                           onChange={(e) => setCvc(e.target.value)}
+                           onChange={(e) => setCvc(e.target.value.replace(/\D/g, ''))} // Allow only digits
                            disabled={isBooking}
                            required
-                           maxLength={4}
+                           maxLength={4} // CVC can be 3 or 4 digits
+                           inputMode="numeric"
                          />
                        </div>
                      </div>
