@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs components
 import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { ScrollArea } from '@/components/ui/scroll-area'; // Import ScrollArea
 import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
@@ -244,8 +245,8 @@ export default function Home() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Grounds Listing */}
-        <section className="md:col-span-1 space-y-4">
-          <h2 className="text-2xl font-semibold text-primary flex items-center justify-between">
+        <section className="md:col-span-1 space-y-4 flex flex-col">
+          <h2 className="text-2xl font-semibold text-primary flex items-center justify-between flex-shrink-0">
             <span>Available Grounds</span>
             {selectedSport !== 'All' && (
                 <Badge variant="secondary" className="text-sm font-normal">
@@ -256,67 +257,72 @@ export default function Home() {
                 </Badge>
             )}
           </h2>
-          {loadingGrounds ? (
-            <div className="space-y-4">
-               {[1, 2].map((_, index) => ( // Skeleton Loaders
-                 <Card key={index} className="overflow-hidden">
-                   <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
-                     <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
-                   </div>
-                   <CardHeader>
-                     <CardTitle className="h-6 w-3/4 bg-muted rounded animate-pulse"></CardTitle>
-                     <CardDescription className="h-4 w-1/2 bg-muted rounded animate-pulse mt-1"></CardDescription>
-                   </CardHeader>
-                   <CardContent>
-                     <p className="h-5 w-1/3 bg-muted rounded animate-pulse"></p>
-                   </CardContent>
-                 </Card>
-               ))}
-            </div>
-          ) : filteredGrounds.length > 0 ? (
-            filteredGrounds.map((ground) => (
-              <Card
-                key={ground.id}
-                className={cn(
-                  'cursor-pointer transition-all hover:shadow-lg overflow-hidden group', // Added group for hover effect
-                  selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
-                )}
-                onClick={() => handleSelectGround(ground)}
-              >
-                {ground.imageUrl && (
-                  <div className="relative w-full aspect-[4/3] overflow-hidden"> {/* Added overflow-hidden */}
-                    <Image
-                      src={ground.imageUrl}
-                      alt={`Image of ${ground.name}`}
-                      layout="fill"
-                      objectFit="cover"
-                      className="transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    />
-                  </div>
-                )}
-                <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
-                  <CardTitle className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-                    {ground.name}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-1 text-sm pt-1">
-                    <MapPin className="h-4 w-4" /> {ground.location}
-                  </CardDescription>
-                   {/* Display Sport Type Badge if relevant */}
-                   {ground.sportType && (
-                       <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
+           {/* Scrollable Area for Grounds */}
+           <ScrollArea className="h-[60vh] md:h-auto md:flex-grow pr-3"> {/* Added ScrollArea */}
+             <div className="space-y-4"> {/* Added inner div */}
+              {loadingGrounds ? (
+                <>
+                  {[1, 2].map((_, index) => ( // Skeleton Loaders
+                    <Card key={index} className="overflow-hidden">
+                      <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
+                        <ImageIcon className="absolute inset-0 m-auto h-12 w-12 text-muted-foreground opacity-50" />
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="h-6 w-3/4 bg-muted rounded animate-pulse"></CardTitle>
+                        <CardDescription className="h-4 w-1/2 bg-muted rounded animate-pulse mt-1"></CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="h-5 w-1/3 bg-muted rounded animate-pulse"></p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              ) : filteredGrounds.length > 0 ? (
+                filteredGrounds.map((ground) => (
+                  <Card
+                    key={ground.id}
+                    className={cn(
+                      'cursor-pointer transition-all hover:shadow-lg overflow-hidden group', // Added group for hover effect
+                      selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
                     )}
-                </CardHeader>
-                <CardContent>
-                  <p className="flex items-center gap-1 font-semibold">
-                    <DollarSign className="h-4 w-4" /> {ground.pricePerHour} / hour
-                  </p>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-             <Card><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
-          )}
+                    onClick={() => handleSelectGround(ground)}
+                  >
+                    {ground.imageUrl && (
+                      <div className="relative w-full aspect-[4/3] overflow-hidden"> {/* Added overflow-hidden */}
+                        <Image
+                          src={ground.imageUrl}
+                          alt={`Image of ${ground.name}`}
+                          layout="fill"
+                          objectFit="cover"
+                          className="transition-transform duration-300 ease-in-out group-hover:scale-105"
+                        />
+                      </div>
+                    )}
+                    <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
+                      <CardTitle className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                        {ground.name}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-1 text-sm pt-1">
+                        <MapPin className="h-4 w-4" /> {ground.location}
+                      </CardDescription>
+                       {/* Display Sport Type Badge if relevant */}
+                       {ground.sportType && (
+                           <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
+                        )}
+                    </CardHeader>
+                    <CardContent>
+                      <p className="flex items-center gap-1 font-semibold">
+                        <DollarSign className="h-4 w-4" /> {ground.pricePerHour} / hour
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                 <Card><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
+              )}
+            </div>
+           </ScrollArea>
         </section>
 
         {/* Booking Section */}
