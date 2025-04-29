@@ -18,6 +18,7 @@ import type { Ground, TimeSlot } from '@/services/ground-booking'; // Import Tim
 import { getGroundById, getTimeSlots } from '@/services/ground-booking'; // Import new functions
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // For image gallery
+import { Label } from '@/components/ui/label'; // Import Label component
 
 // Helper to map amenity string to icon
 const AmenityIcon = ({ amenity }: { amenity: string }) => {
