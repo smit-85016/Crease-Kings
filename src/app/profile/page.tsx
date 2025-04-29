@@ -190,7 +190,7 @@ export default function ProfilePage() {
                      <TableHead className="w-[150px] hidden sm:table-cell">
                         <MapPinned className="inline-block h-4 w-4 mr-1" /> Ground
                      </TableHead>
-                     <TableHead className="sm:hidden">Details</TableHead> {/* Combined column for mobile */}
+                     <TableHead className="sm:hidden">Details</TableHead>{/* Combined column for mobile */}
                      <TableHead className="w-[100px] text-center hidden sm:table-cell">
                         <CalendarDays className="inline-block h-4 w-4 mr-1" /> Date
                       </TableHead>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
                    {displayedHistory.length > 0 ? (
                      displayedHistory.map((booking) => (
                        <TableRow key={booking.id}>
-                          {/* Desktop View */}
+                         {/* Desktop View */}
                          <TableCell className="font-medium hidden sm:table-cell">{booking.groundName}</TableCell>
                          <TableCell className="text-center hidden sm:table-cell">{new Date(booking.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</TableCell>
                          <TableCell className="text-center hidden sm:table-cell">{booking.time}</TableCell>
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                               {booking.status}
                             </Badge>
                          </TableCell>
-                          {/* Mobile View */}
+                         {/* Mobile View */}
                          <TableCell className="sm:hidden">
                             <div className="font-medium">{booking.groundName}</div>
                             <div className="text-xs text-muted-foreground">
