@@ -4,65 +4,23 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Mail, User, Settings, LogIn } from 'lucide-react'; // Added LogIn
+import { Home, Mail, User, Settings } from 'lucide-react'; // Removed LogIn
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-// Simulated authentication hook checking sessionStorage
-const useAuth = () => {
-    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
-    React.useEffect(() => {
-        // Check if the user is logged in based on sessionStorage flag
-        const loggedIn = typeof window !== 'undefined' ? sessionStorage.getItem('isLoggedIn') === 'true' : false;
-        setIsAuthenticated(loggedIn);
-
-        // Optional: Add event listener for storage changes if needed for cross-tab sync
-        const handleStorageChange = () => {
-             const loggedIn = typeof window !== 'undefined' ? sessionStorage.getItem('isLoggedIn') === 'true' : false;
-             setIsAuthenticated(loggedIn);
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        // Also check on focus in case login happened in another tab
-        window.addEventListener('focus', handleStorageChange);
-
-        // Simulate initial check if needed (sometimes useEffect runs after initial paint)
-        handleStorageChange();
-
-
-        return () => {
-             window.removeEventListener('storage', handleStorageChange);
-             window.removeEventListener('focus', handleStorageChange);
-        };
-    }, []); // Empty dependency array ensures this runs once on mount and cleans up
-
-    return { isAuthenticated };
-};
+// Removed the useAuth hook as login/signup is temporarily disabled
 
 export default function BottomNavBar() {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth(); // Check authentication status
+  // const { isAuthenticated } = useAuth(); // Removed auth check
 
-  const baseNavItems = [
+  // Always show these items now
+  const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/contact', label: 'Contact Us', icon: Mail },
-  ];
-
-  const authNavItems = [
     { href: '/profile', label: 'Profile', icon: User },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
-
-  const unauthNavItems = [
-     { href: '/login', label: 'Login', icon: LogIn }, // Add login icon/link
-  ];
-
-
-  // Determine which set of navigation items to show based on authentication
-   const navItems = isAuthenticated
-     ? [...baseNavItems, ...authNavItems]
-     : [...baseNavItems, ...unauthNavItems];
 
 
   return (

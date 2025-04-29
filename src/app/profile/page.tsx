@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useState } from 'react'; // Import useState
-import { useRouter } from 'next/navigation'; // Import useRouter
+// import { useRouter } from 'next/navigation'; // Removed useRouter as logout is removed
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Import form components
 import { useToast } from '@/hooks/use-toast'; // Import useToast
 
-import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'; // Added ChevronDown, ChevronUp, Loader2
+import { User, Mail, Phone, CalendarDays, MapPin, Edit, History, Star, Clock, MapPinned, ShieldCheck, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'; // Removed LogOut icon
 
 // Define Zod schema for profile editing
 const profileSchema = z.object({
@@ -66,7 +66,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false); // State for saving indicator
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for dialog open/close
   const { toast } = useToast();
-  const router = useRouter(); // Initialize useRouter for logout redirection
+  // const router = useRouter(); // Removed router
 
   const displayedHistory = showFullHistory ? fakeBookingHistory : fakeBookingHistory.slice(0, INITIAL_HISTORY_COUNT);
 
@@ -112,7 +112,8 @@ export default function ProfilePage() {
     });
   };
 
-    // Handle Logout
+    // Removed Handle Logout function
+    /*
     const handleLogout = () => {
         console.log('Logging out...');
         // Remove the login flag and temporary credentials from sessionStorage
@@ -131,6 +132,7 @@ export default function ProfilePage() {
         // Redirect to login page
         router.push('/login');
     };
+    */
 
 
   return (
@@ -365,10 +367,12 @@ export default function ProfilePage() {
                    </DialogContent>
                 </Dialog>
 
-               {/* Logout Button */}
+               {/* Removed Logout Button */}
+               {/*
                <Button variant="destructive" className="flex-1" onClick={handleLogout}>
                  <LogOut className="mr-2 h-4 w-4" /> Logout
                </Button>
+               */}
            </section>
         </CardContent>
       </Card>
