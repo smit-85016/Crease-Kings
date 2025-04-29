@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'; // Import ScrollBar
 import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
@@ -59,7 +59,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
-  const [loadingGrounds, setLoadingGrounds] = useState(true);
+  const [loadingGrounds, setLoadingGrounds] = useState(true); // Start loading initially
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
@@ -83,19 +83,23 @@ export default function Home() {
     } else {
       setShowInitialLoader(false); // Don't show loader if already visited
       setIsInitialLoadComplete(true); // Mark as complete immediately
+      setLoadingGrounds(true); // Set loading true here if not showing initial spinner
     }
   }, []);
 
   // Fetch grounds only after initial load animation is potentially complete
   useEffect(() => {
-    if (!isInitialLoadComplete) return; // Don't fetch if initial load isn't done
+    // Do not fetch if initial load isn't complete OR if we are still showing the initial loader
+    if (!isInitialLoadComplete || showInitialLoader) return;
 
     async function fetchGrounds() {
+      console.log("Fetching grounds...");
+      setLoadingGrounds(true); // Set loading true BEFORE fetch starts
       try {
-        setLoadingGrounds(true);
         const fetchedGrounds = await getGrounds();
+        console.log("Grounds fetched:", fetchedGrounds);
         setAllGrounds(fetchedGrounds);
-        // Initial filter will be applied by the next effect
+        // Filtering will happen in the next effect, which will set loadingGrounds = false
       } catch (error) {
         console.error('Failed to fetch grounds:', error);
         toast({
@@ -103,32 +107,51 @@ export default function Home() {
           description: 'Could not fetch available grounds. Please try again later.',
           variant: 'destructive',
         });
-      } finally {
-        // Loading state will be handled by the filter effect
+        setLoadingGrounds(false); // Set loading false on error
+        setFilteredGrounds([]); // Clear grounds on error
       }
     }
     fetchGrounds();
-  }, [isInitialLoadComplete, toast]); // Depend on initial load completion
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialLoadComplete, showInitialLoader, toast]); // Depend on initial load completion and loader state
 
   // Filter grounds when selectedSport or allGrounds change (after initial load)
   useEffect(() => {
-     if (!isInitialLoadComplete) return; // Don't filter if initial load isn't done
+    if (!isInitialLoadComplete || showInitialLoader) return; // Don't filter if initial load isn't done
 
-    setLoadingGrounds(true); // Show loading state while filtering/loading
-    const groundsToFilter = allGrounds; // Use the fetched grounds
+    console.log("Filtering grounds based on:", selectedSport, "All grounds:", allGrounds);
+    const groundsToFilter = allGrounds;
 
+    let newlyFilteredGrounds: Ground[] = [];
     if (selectedSport === 'All') {
-      setFilteredGrounds(groundsToFilter);
+      newlyFilteredGrounds = groundsToFilter;
     } else {
-        setFilteredGrounds(groundsToFilter.filter(ground => ground.sportType === selectedSport));
+      newlyFilteredGrounds = groundsToFilter.filter(ground => ground.sportType === selectedSport);
     }
-     setSelectedGround(null);
-     setSelectedTimeSlot(null);
-    // Only set loading false *if* grounds have been fetched initially or filtering is done
-    if (allGrounds.length > 0 || !loadingGrounds || selectedSport) { // Adjusted condition
-        setTimeout(() => setLoadingGrounds(false), 100); // Short delay for visual feedback if needed
+    console.log("Filtered grounds:", newlyFilteredGrounds);
+    setFilteredGrounds(newlyFilteredGrounds);
+
+    // Reset selections when filter changes
+    if (selectedGround && !newlyFilteredGrounds.find(g => g.id === selectedGround.id)) {
+      setSelectedGround(null);
     }
-  }, [selectedSport, allGrounds, isInitialLoadComplete, loadingGrounds]); // Added loadingGrounds dependency
+    setSelectedTimeSlot(null);
+
+    // Set loadingGrounds to false *after* filtering is done *and* the initial fetch has completed (indicated by allGrounds having data or explicitly not loading)
+    // This check ensures we don't set loading to false prematurely.
+    if (allGrounds.length > 0 || !loadingGrounds || selectedSport) { // Check if data arrived or loading state was already false
+        setLoadingGrounds(false);
+        console.log("Set loadingGrounds to false after filtering.");
+    } else if (allGrounds.length === 0 && !loadingGrounds) {
+        // Handle the case where the fetch completed but returned zero grounds
+         setLoadingGrounds(false);
+         console.log("Set loadingGrounds to false after filtering (no grounds found).");
+    }
+
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSport, allGrounds, isInitialLoadComplete, showInitialLoader]); // Removed loadingGrounds dependency
+
 
   // Fetch time slots when ground or date changes (after initial load)
   useEffect(() => {
@@ -145,7 +168,9 @@ export default function Home() {
         setTimeSlots([]);
         setSelectedTimeSlot(null);
         const dateString = format(selectedDate!, 'yyyy-MM-dd');
+        console.log(`Fetching time slots for ground ${selectedGround!.id} on ${dateString}`);
         const fetchedTimeSlots = await getTimeSlots(selectedGround!.id, dateString);
+        console.log("Time slots fetched:", fetchedTimeSlots);
         setTimeSlots(fetchedTimeSlots);
       } catch (error) {
         console.error('Failed to fetch time slots:', error);
@@ -159,11 +184,12 @@ export default function Home() {
       }
     }
     fetchTimeSlots();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGround, selectedDate, isInitialLoadComplete, toast]);
 
   const handleSelectGround = (ground: Ground) => {
     setSelectedGround(ground);
-    setSelectedTimeSlot(null);
+    setSelectedTimeSlot(null); // Clear selected time slot when ground changes
   };
 
   const handleSelectTimeSlot = (slot: TimeSlot) => {
@@ -196,6 +222,7 @@ export default function Home() {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const paymentDetails = { cardNumber, expiryDate, cvc };
 
+      console.log("Attempting booking:", { groundId: selectedGround.id, date: dateString, startTime: selectedTimeSlot.startTime, endTime: selectedTimeSlot.endTime });
       const success = await bookTimeSlot(
         selectedGround.id,
         dateString,
@@ -209,6 +236,7 @@ export default function Home() {
           title: 'Booking Confirmed!',
           description: `Successfully booked ${selectedGround.name} on ${dateString} from ${selectedTimeSlot.startTime} to ${selectedTimeSlot.endTime}. Payment processed.`,
           variant: 'default',
+          duration: 5000, // Show for 5 seconds
         });
         // Refetch time slots to show updated availability
         const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
@@ -222,6 +250,7 @@ export default function Home() {
            title: 'Booking Failed',
            description: 'Could not complete the booking. The slot might be unavailable or payment failed. Please try again.',
            variant: 'destructive',
+           duration: 5000,
          });
          // Optionally refetch time slots even on failure to ensure UI consistency
          const updatedTimeSlots = await getTimeSlots(selectedGround.id, dateString);
@@ -234,6 +263,7 @@ export default function Home() {
         title: 'Booking Failed',
         description: 'An unexpected error occurred during booking. Please try again.',
         variant: 'destructive',
+        duration: 5000,
       });
       // Optionally refetch time slots on error
        if (selectedGround && selectedDate) {
@@ -256,6 +286,7 @@ export default function Home() {
 
   // Render main content only after initial load animation is complete
   if (!isInitialLoadComplete) {
+    console.log("Initial load not complete, rendering null.");
     return null; // Or a minimal placeholder if preferred
   }
 
@@ -274,13 +305,16 @@ export default function Home() {
       {/* Sport Type Filter Tabs */}
       <section className="mb-8 flex flex-col items-center">
          <Tabs defaultValue={selectedSport} onValueChange={setSelectedSport} className="w-full max-w-lg">
-             <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
-                 {sportTypes.map((sport) => (
-                     <TabsTrigger key={sport} value={sport} className="text-xs sm:text-sm px-2 py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                     {sport}
-                     </TabsTrigger>
-                 ))}
-             </TabsList>
+            <ScrollArea className="whitespace-nowrap rounded-md border max-w-full">
+                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1 ">
+                    {sportTypes.map((sport) => (
+                        <TabsTrigger key={sport} value={sport} className="text-xs sm:text-sm px-2 py-1.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground flex-shrink-0">
+                        {sport}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
          </Tabs>
       </section>
 
@@ -303,6 +337,7 @@ export default function Home() {
              <div className="space-y-4">
               {loadingGrounds ? (
                 <>
+                 { console.log("Rendering Skeleton Loaders") }
                   {[1, 2].map((_, index) => ( // Skeleton Loaders
                     <Card key={index} className="overflow-hidden">
                       <div className="relative w-full aspect-[4/3] bg-muted animate-pulse">
@@ -319,50 +354,56 @@ export default function Home() {
                   ))}
                 </>
               ) : filteredGrounds.length > 0 ? (
-                filteredGrounds.map((ground) => (
-                  <Card
-                    key={ground.id}
-                    className={cn(
-                      'cursor-pointer transition-all hover:shadow-lg overflow-hidden group',
-                      selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
-                    )}
-                    onClick={() => handleSelectGround(ground)}
-                  >
-                    {ground.imageUrl && (
-                      <div className="relative w-full aspect-[4/3] overflow-hidden">
-                        <Image
-                          src={ground.imageUrl}
-                          alt={`Image of ${ground.name}`}
-                          fill // Use fill instead of layout="fill"
-                          style={{objectFit:"cover"}} // Use style prop for objectFit
-                          className="transition-transform duration-300 ease-in-out group-hover:scale-105"
-                          priority={filteredGrounds.indexOf(ground) < 3} // Prioritize loading images for the first few grounds
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes for responsive loading
-                        />
-                      </div>
-                    )}
-                    <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
-                      <CardTitle className="flex items-center gap-2">
-                        {/* Simple icon placeholder - replace if specific icons per sport are needed */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
-                        {ground.name}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-1 text-sm pt-1">
-                        <MapPin className="h-4 w-4" /> {ground.location}
-                      </CardDescription>
-                       {ground.sportType && (
-                           <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
+                 <>
+                 { console.log("Rendering Filtered Grounds:", filteredGrounds) }
+                    {filteredGrounds.map((ground) => (
+                    <Card
+                        key={ground.id}
+                        className={cn(
+                        'cursor-pointer transition-all hover:shadow-lg overflow-hidden group',
+                        selectedGround?.id === ground.id && 'ring-2 ring-primary border-primary'
                         )}
-                    </CardHeader>
-                    <CardContent>
-                      <p className="flex items-center gap-1 font-semibold">
-                        <DollarSign className="h-4 w-4" /> {ground.pricePerHour} / hour
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))
+                        onClick={() => handleSelectGround(ground)}
+                    >
+                        {ground.imageUrl && (
+                        <div className="relative w-full aspect-[4/3] overflow-hidden">
+                            <Image
+                            src={ground.imageUrl}
+                            alt={`Image of ${ground.name}`}
+                            fill // Use fill instead of layout="fill"
+                            style={{objectFit:"cover"}} // Use style prop for objectFit
+                            className="transition-transform duration-300 ease-in-out group-hover:scale-105"
+                            priority={filteredGrounds.indexOf(ground) < 3} // Prioritize loading images for the first few grounds
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes for responsive loading
+                            />
+                        </div>
+                        )}
+                        <CardHeader className={!ground.imageUrl ? 'pt-6' : ''}>
+                        <CardTitle className="flex items-center gap-2">
+                            {/* Simple icon placeholder - replace if specific icons per sport are needed */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pinned"><path d="M18 8c0 4.5-6 9-6 9s-6-4.5-6-9a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/><path d="M8.83 15.17A2 2 0 0 0 12 17h0a2 2 0 0 0 3.17-1.83"/></svg>
+                            {ground.name}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-1 text-sm pt-1">
+                            <MapPin className="h-4 w-4" /> {ground.location}
+                        </CardDescription>
+                        {ground.sportType && (
+                            <Badge variant="outline" className="mt-2 w-fit text-xs">{ground.sportType}</Badge>
+                            )}
+                        </CardHeader>
+                        <CardContent>
+                        <p className="flex items-center gap-1 font-semibold">
+                            <DollarSign className="h-4 w-4" /> {ground.pricePerHour} / hour
+                        </p>
+                        </CardContent>
+                    </Card>
+                    ))}
+                 </>
               ) : (
+                 <>
+                  { console.log("Rendering No Grounds Message") }
                  <Card><CardContent className="pt-6"><p className="text-muted-foreground">No {selectedSport !== 'All' ? selectedSport : ''} grounds available matching your selection.</p></CardContent></Card>
+                 </>
               )}
             </div>
            </ScrollArea>
