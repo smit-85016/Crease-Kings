@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Import Table components
+import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck } from 'lucide-react';
 
 // Fake user data
 const fakeUser = {
@@ -21,10 +22,20 @@ const fakeUser = {
   favoriteGround: 'Alpha Arena',
 };
 
+// Fake booking history data
+const fakeBookingHistory = [
+  { id: 'bh001', groundName: 'Alpha Arena', date: '2024-07-10', time: '18:00 - 19:00', status: 'Completed', price: 1200 },
+  { id: 'bh002', groundName: 'Beta Box Park', date: '2024-06-25', time: '19:00 - 20:00', status: 'Completed', price: 1000 },
+  { id: 'bh003', groundName: 'Gamma Cricket Hub', date: '2024-06-10', time: '17:00 - 18:00', status: 'Completed', price: 1150 },
+  { id: 'bh004', groundName: 'Alpha Arena', date: '2024-05-20', time: '20:00 - 21:00', status: 'Completed', price: 1200 },
+  { id: 'bh005', groundName: 'Beta Box Park', date: '2024-07-25', time: '18:00 - 19:00', status: 'Upcoming', price: 1000 }, // Example upcoming booking
+];
+
+
 export default function ProfilePage() {
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
-      <Card className="max-w-2xl mx-auto shadow-lg overflow-hidden">
+      <Card className="max-w-3xl mx-auto shadow-lg overflow-hidden"> {/* Increased max-width */}
         <CardHeader className="bg-gradient-to-r from-primary/10 via-card to-accent/10 p-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20 border-2 border-primary shadow-md">
@@ -69,12 +80,13 @@ export default function ProfilePage() {
 
           <Separator />
 
-          {/* Booking Summary */}
+          {/* Booking Activity */}
           <section>
-            <h3 className="text-lg font-semibold mb-3 text-foreground flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
               <History className="h-5 w-5 text-primary" /> Booking Activity
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+             {/* Summary Boxes */}
+            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div className="bg-muted p-3 rounded-lg text-center">
                     <p className="font-semibold text-foreground">{fakeUser.totalBookings}</p>
                     <p className="text-muted-foreground text-xs">Total Bookings</p>
@@ -90,9 +102,60 @@ export default function ProfilePage() {
                     <p className="text-muted-foreground text-xs">Last Game Played</p>
                 </div>
             </div>
-              <Button variant="link" className="mt-2 px-0 h-auto text-primary hover:underline">
-                View Full Booking History
-              </Button>
+
+            {/* Booking History Table */}
+            <h4 className="text-md font-semibold mb-2 text-foreground">Booking History</h4>
+            <div className="rounded-md border overflow-hidden">
+               <Table>
+                 <TableHeader className="bg-muted/50">
+                   <TableRow>
+                     <TableHead className="w-[150px] hidden sm:table-cell">
+                        <MapPinned className="inline-block h-4 w-4 mr-1" /> Ground
+                     </TableHead>
+                     <TableHead className="sm:hidden">Details</TableHead> {/* Combined column for mobile */}
+                     <TableHead className="w-[100px] text-center hidden sm:table-cell">
+                        <CalendarDays className="inline-block h-4 w-4 mr-1" /> Date
+                      </TableHead>
+                     <TableHead className="w-[120px] text-center hidden sm:table-cell">
+                        <Clock className="inline-block h-4 w-4 mr-1" /> Time
+                      </TableHead>
+                     <TableHead className="w-[100px] text-right hidden sm:table-cell">Status</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {fakeBookingHistory.length > 0 ? (
+                     fakeBookingHistory.map((booking) => (
+                       <TableRow key={booking.id}>
+                          {/* Desktop View */}
+                         <TableCell className="font-medium hidden sm:table-cell">{booking.groundName}</TableCell>
+                         <TableCell className="text-center hidden sm:table-cell">{new Date(booking.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</TableCell>
+                         <TableCell className="text-center hidden sm:table-cell">{booking.time}</TableCell>
+                         <TableCell className="text-right hidden sm:table-cell">
+                            <Badge variant={booking.status === 'Completed' ? 'secondary' : 'default'} className={booking.status === 'Upcoming' ? 'bg-primary/80 text-primary-foreground' : ''}>
+                              {booking.status}
+                            </Badge>
+                         </TableCell>
+                          {/* Mobile View */}
+                         <TableCell className="sm:hidden">
+                            <div className="font-medium">{booking.groundName}</div>
+                            <div className="text-xs text-muted-foreground">
+                               {new Date(booking.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} @ {booking.time}
+                             </div>
+                             <Badge variant={booking.status === 'Completed' ? 'secondary' : 'default'} className={`mt-1 text-xs ${booking.status === 'Upcoming' ? 'bg-primary/80 text-primary-foreground' : ''}`}>
+                               {booking.status}
+                             </Badge>
+                          </TableCell>
+                       </TableRow>
+                     ))
+                   ) : (
+                     <TableRow>
+                       <TableCell colSpan={4} className="text-center text-muted-foreground py-4">No booking history found.</TableCell>
+                     </TableRow>
+                   )}
+                 </TableBody>
+               </Table>
+            </div>
+              {/* Removed the "View Full Booking History" button */}
           </section>
 
           <Separator />
