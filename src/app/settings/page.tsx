@@ -15,18 +15,38 @@ export default function SettingsPage() {
   const [bookingNotifications, setBookingNotifications] = useState(true);
   const [reminderNotifications, setReminderNotifications] = useState(true);
   const [promoNotifications, setPromoNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(false); // Assuming a theme toggle exists
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize dark mode based on existing class or system preference
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false; // Default to light mode server-side
+  });
 
   const handleThemeChange = (checked: boolean) => {
     setDarkMode(checked);
-    // In a real app, you would update the theme using context or CSS variables
+    // Apply/remove the dark class to the root HTML element
     if (checked) {
         document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark'); // Optional: Persist theme preference
     } else {
         document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light'); // Optional: Persist theme preference
     }
      console.log("Dark mode toggled:", checked);
   };
+
+  // Effect to set initial theme on mount based on localStorage or system preference
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        handleThemeChange(true);
+    } else {
+        handleThemeChange(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
@@ -44,7 +64,7 @@ export default function SettingsPage() {
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 rounded-md border bg-card">
-                <Label htmlFor="booking-notifications" className="flex flex-col space-y-1">
+                <Label htmlFor="booking-notifications" className="flex flex-col space-y-1 cursor-pointer">
                   <span>Booking Confirmations</span>
                   <span className="font-normal leading-snug text-muted-foreground text-xs">
                     Receive email/push notifications upon successful bookings.
@@ -58,7 +78,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="flex items-center justify-between p-3 rounded-md border bg-card">
-                 <Label htmlFor="reminder-notifications" className="flex flex-col space-y-1">
+                 <Label htmlFor="reminder-notifications" className="flex flex-col space-y-1 cursor-pointer">
                   <span>Booking Reminders</span>
                    <span className="font-normal leading-snug text-muted-foreground text-xs">
                      Get reminders before your scheduled game time.
@@ -72,7 +92,7 @@ export default function SettingsPage() {
                 />
               </div>
                <div className="flex items-center justify-between p-3 rounded-md border bg-card">
-                 <Label htmlFor="promo-notifications" className="flex flex-col space-y-1">
+                 <Label htmlFor="promo-notifications" className="flex flex-col space-y-1 cursor-pointer">
                   <span>Promotional Offers</span>
                    <span className="font-normal leading-snug text-muted-foreground text-xs">
                      Receive news about special discounts and offers.
@@ -97,21 +117,21 @@ export default function SettingsPage() {
             </h3>
             <div className="space-y-4">
                <div className="flex items-center justify-between p-3 rounded-md border bg-card">
-                 <Label htmlFor="theme-toggle" className="flex flex-col space-y-1">
+                 <Label htmlFor="theme-toggle" className="flex flex-col space-y-1 cursor-pointer">
                   <span>Appearance</span>
                    <span className="font-normal leading-snug text-muted-foreground text-xs">
                      Switch between light and dark mode.
                    </span>
                  </Label>
                  <div className="flex items-center gap-2">
-                    <Sun className={`h-5 w-5 ${!darkMode ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <Sun className={`h-5 w-5 transition-colors ${!darkMode ? 'text-primary' : 'text-muted-foreground'}`} />
                     <Switch
                       id="theme-toggle"
                       checked={darkMode}
                       onCheckedChange={handleThemeChange}
                       aria-label="Toggle dark mode"
                     />
-                    <Moon className={`h-5 w-5 ${darkMode ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <Moon className={`h-5 w-5 transition-colors ${darkMode ? 'text-primary' : 'text-muted-foreground'}`} />
                  </div>
               </div>
               {/* Add other preferences like language, default sorting etc. if needed */}
@@ -174,7 +194,7 @@ export default function SettingsPage() {
                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                </Button>
                 <div className="text-center text-muted-foreground text-xs pt-4">
-                    App Version 1.0.0 (Build 20240725)
+                    Crease Kings App Version 1.0.0 (Build 20240726) {/* Updated App Name */}
                  </div>
              </div>
           </section>
