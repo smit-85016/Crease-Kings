@@ -3,16 +3,37 @@
 
 import * as React from 'react';
 import { useState } from 'react'; // Import useState
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react'; // Added ChevronDown, ChevronUp
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Import form components
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
-// Fake user data
-const fakeUser = {
+import { User, Mail, Phone, CalendarDays, MapPin, Edit, LogOut, History, Star, Clock, MapPinned, ShieldCheck, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'; // Added ChevronDown, ChevronUp, Loader2
+
+// Define Zod schema for profile editing
+const profileSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  email: z.string().email({ message: 'Invalid email address.' }),
+  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }).regex(/^\+?[0-9\s\-()]+$/, { message: 'Invalid phone number format.'}), // Allow digits, spaces, hyphens, parentheses, optional leading +
+  location: z.string().min(3, { message: 'Location must be at least 3 characters.' }),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
+
+// Fake user data (initial)
+const initialFakeUser = {
   name: 'Virat Sharma',
   email: 'virat.sharma@boxcricket.fake',
   phone: '+91 98765 43210',
@@ -39,9 +60,56 @@ const fakeBookingHistory = [
 const INITIAL_HISTORY_COUNT = 3;
 
 export default function ProfilePage() {
+  const [userData, setUserData] = useState(initialFakeUser); // State for user data
   const [showFullHistory, setShowFullHistory] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // State for saving indicator
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for dialog open/close
+  const { toast } = useToast();
 
   const displayedHistory = showFullHistory ? fakeBookingHistory : fakeBookingHistory.slice(0, INITIAL_HISTORY_COUNT);
+
+   // Initialize react-hook-form
+   const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      location: userData.location,
+    },
+     // Re-initialize form when userData changes (e.g., after saving) or dialog opens
+     values: {
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        location: userData.location,
+      },
+  });
+
+  // Handle form submission
+  const onSubmit = async (data: ProfileFormValues) => {
+    setIsSaving(true);
+    console.log('Updating profile:', data);
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Update the user data state
+    setUserData((prevData) => ({
+      ...prevData, // Keep existing non-editable data
+      ...data, // Update with new form data
+    }));
+
+    setIsSaving(false);
+    setIsEditDialogOpen(false); // Close the dialog on successful save
+    form.reset(data); // Reset form with new values
+
+    toast({
+        title: 'Profile Updated',
+        description: 'Your profile details have been saved.',
+    });
+  };
+
 
   return (
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
@@ -49,18 +117,18 @@ export default function ProfilePage() {
         <CardHeader className="bg-gradient-to-r from-primary/10 via-card to-accent/10 p-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20 border-2 border-primary shadow-md">
-              <AvatarImage src={fakeUser.avatarUrl} alt={fakeUser.name} />
+              <AvatarImage src={userData.avatarUrl} alt={userData.name} />
               <AvatarFallback className="text-xl bg-primary/20 text-primary">
-                {fakeUser.name.split(' ').map(n => n[0]).join('')}
+                {userData.name.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-3xl font-bold text-primary">{fakeUser.name}</CardTitle>
+              <CardTitle className="text-3xl font-bold text-primary">{userData.name}</CardTitle>
               <CardDescription className="text-md flex items-center gap-1">
-                <MapPin className="h-4 w-4" /> {fakeUser.location}
+                <MapPin className="h-4 w-4" /> {userData.location}
               </CardDescription>
               <Badge variant="default" className="mt-2 bg-accent text-accent-foreground">
-                 <Star className="mr-1 h-3 w-3" /> {fakeUser.membership}
+                 <Star className="mr-1 h-3 w-3" /> {userData.membership}
               </Badge>
             </div>
           </div>
@@ -75,15 +143,15 @@ export default function ProfilePage() {
             <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>{fakeUser.email}</span>
+                <span>{userData.email}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>{fakeUser.phone}</span>
+                <span>{userData.phone}</span>
               </div>
               <div className="flex items-center gap-3">
                 <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>Joined on {new Date(fakeUser.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span>Joined on {new Date(userData.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>
             </div>
           </section>
@@ -98,16 +166,16 @@ export default function ProfilePage() {
              {/* Summary Boxes */}
             <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div className="bg-muted p-3 rounded-lg text-center">
-                    <p className="font-semibold text-foreground">{fakeUser.totalBookings}</p>
+                    <p className="font-semibold text-foreground">{userData.totalBookings}</p>
                     <p className="text-muted-foreground text-xs">Total Bookings</p>
                 </div>
                  <div className="bg-muted p-3 rounded-lg text-center">
-                    <p className="font-semibold text-foreground">{fakeUser.favoriteGround}</p>
+                    <p className="font-semibold text-foreground">{userData.favoriteGround}</p>
                     <p className="text-muted-foreground text-xs">Favorite Ground</p>
                 </div>
                  <div className="bg-muted p-3 rounded-lg text-center col-span-2">
                     <p className="font-semibold text-foreground">
-                      {new Date(fakeUser.lastBookingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {new Date(userData.lastBookingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
                     <p className="text-muted-foreground text-xs">Last Game Played</p>
                 </div>
@@ -190,14 +258,96 @@ export default function ProfilePage() {
           <Separator />
 
           {/* Actions */}
-          <section className="flex flex-col sm:flex-row gap-3">
-             <Button variant="outline" className="flex-1">
-               <Edit className="mr-2 h-4 w-4" /> Edit Profile
-             </Button>
-              <Button variant="destructive" className="flex-1">
+            <section className="flex flex-col sm:flex-row gap-3">
+                 {/* Edit Profile Dialog */}
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                   <DialogTrigger asChild>
+                     <Button variant="outline" className="flex-1">
+                       <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                     </Button>
+                   </DialogTrigger>
+                   <DialogContent className="sm:max-w-[425px]">
+                     <DialogHeader>
+                       <DialogTitle>Edit Profile</DialogTitle>
+                       <DialogDescription>
+                         Make changes to your profile here. Click save when you're done.
+                       </DialogDescription>
+                     </DialogHeader>
+                     <Form {...form}>
+                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                         <FormField
+                           control={form.control}
+                           name="name"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Name</FormLabel>
+                               <FormControl>
+                                 <Input placeholder="Your Name" {...field} disabled={isSaving} />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                          <FormField
+                           control={form.control}
+                           name="email"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Email</FormLabel>
+                               <FormControl>
+                                 <Input type="email" placeholder="your.email@example.com" {...field} disabled={isSaving} />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                          <FormField
+                           control={form.control}
+                           name="phone"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Phone</FormLabel>
+                               <FormControl>
+                                 <Input type="tel" placeholder="+91 12345 67890" {...field} disabled={isSaving} />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                         <FormField
+                           control={form.control}
+                           name="location"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Location</FormLabel>
+                               <FormControl>
+                                 <Input placeholder="City, Country" {...field} disabled={isSaving} />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                         <DialogFooter>
+                           <DialogClose asChild>
+                             <Button type="button" variant="secondary" disabled={isSaving}>
+                               Cancel
+                             </Button>
+                           </DialogClose>
+                           <Button type="submit" disabled={isSaving}>
+                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                             Save Changes
+                           </Button>
+                         </DialogFooter>
+                       </form>
+                     </Form>
+                   </DialogContent>
+                </Dialog>
+
+               {/* Logout Button */}
+               <Button variant="destructive" className="flex-1">
                  <LogOut className="mr-2 h-4 w-4" /> Logout
-              </Button>
-          </section>
+               </Button>
+           </section>
 
         </CardContent>
 

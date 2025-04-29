@@ -12,7 +12,7 @@ const DialogTrigger = DialogPrimitive.Trigger
 
 const DialogPortal = DialogPrimitive.Portal
 
-const DialogClose = DialogPrimitive.Close
+const DialogClose = DialogPrimitive.Close // Export DialogClose
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -73,7 +73,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4", // Added pt-4 for spacing
       className
     )}
     {...props}
@@ -112,7 +112,7 @@ export {
   Dialog,
   DialogPortal,
   DialogOverlay,
-  DialogClose,
+  DialogClose, // Export DialogClose
   DialogTrigger,
   DialogContent,
   DialogHeader,
