@@ -16,7 +16,7 @@ export default function ContactPage() {
             <Mail className="h-8 w-8" /> Get In Touch
           </CardTitle>
           <CardDescription>
-            We'd love to hear from you! Reach out with any questions or feedback.
+            We'd love to hear from you! Reach out with any questions or feedback for Crease Kings.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-8">
@@ -38,8 +38,8 @@ export default function ContactPage() {
               <div>
                 <p className="font-medium">Email Us</p>
                 <p className="text-muted-foreground text-sm">
-                  <a href="mailto:support@boxcricketbooker.fake" className="hover:text-primary transition-colors">
-                    support@boxcricketbooker.fake
+                  <a href="mailto:support@creasekings.fake" className="hover:text-primary transition-colors">
+                    support@creasekings.fake {/* Updated Email */}
                   </a>
                 </p>
               </div>
@@ -88,7 +88,6 @@ export default function ContactPage() {
              </Button>
           </div>
         </CardContent>
-
       </Card>
     </main>
   );

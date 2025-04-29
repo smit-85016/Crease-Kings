@@ -35,7 +35,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 // Fake user data (initial)
 const initialFakeUser = {
   name: 'Virat Sharma',
-  email: 'virat.sharma@boxcricket.fake',
+  email: 'virat.sharma@creasekings.fake', // Updated email domain
   phone: '+91 98765 43210',
   joinedDate: '2023-05-15',
   avatarUrl: 'https://picsum.photos/seed/virat/100/100', // Placeholder avatar
@@ -348,9 +348,7 @@ export default function ProfilePage() {
                  <LogOut className="mr-2 h-4 w-4" /> Logout
                </Button>
            </section>
-
         </CardContent>
-
       </Card>
     </main>
   );

@@ -17,6 +17,36 @@ import { useToast } from '@/hooks/use-toast';
 import type { Ground, TimeSlot } from '@/services/ground-booking';
 import { getGrounds, getTimeSlots, bookTimeSlot } from '@/services/ground-booking';
 
+// Custom Cricket Logo SVG
+const CricketLogo = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="lucide lucide-cricket"
+  >
+    {/* Cricket Bat */}
+    <path d="M10.15 17.37a2 2 0 0 1-1.5 1.13l-1.15.38a2 2 0 0 1-2.36-2.36l.38-1.15a2 2 0 0 1 1.13-1.5L17 10" />
+    <path d="m15 12 2-2" />
+    <path d="M7.5 10.5 10 8" />
+    <path d="M16.5 13.5 19 11" />
+    {/* Cricket Ball */}
+    <circle cx="6" cy="18" r="2" />
+     {/* Stumps (simplified) */}
+    <line x1="18" y1="16" x2="18" y2="21" />
+    <line x1="20" y1="16" x2="20" y2="21" />
+    <line x1="22" y1="16" x2="22" y2="21" />
+    <line x1="18" y1="16" x2="22" y2="16" /> {/* Bails */}
+  </svg>
+);
+
+
 export default function Home() {
   const [grounds, setGrounds] = useState<Ground[]>([]);
   const [selectedGround, setSelectedGround] = useState<Ground | null>(null);
@@ -167,8 +197,8 @@ export default function Home() {
     <main className="container mx-auto p-4 md:p-8 min-h-screen bg-secondary">
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-primary mb-2 flex items-center justify-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-swords"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="15" y2="19"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg>
-          Box Cricket Booker
+           <CricketLogo /> {/* Use the custom logo component */}
+           Crease Kings {/* Updated App Name */}
         </h1>
         <p className="text-muted-foreground">Find and book your perfect box cricket ground</p>
       </header>

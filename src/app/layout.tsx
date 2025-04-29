@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Box Cricket Booker',
-  description: 'Book your next box cricket game easily.',
+  title: 'Crease Kings', // Changed title
+  description: 'Book your next box cricket game easily with Crease Kings.', // Updated description
 };
 
 export default function RootLayout({
