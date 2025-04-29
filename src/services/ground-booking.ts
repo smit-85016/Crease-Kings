@@ -40,6 +40,10 @@ export interface Ground {
    */
   galleryUrls?: string[];
   /**
+   * Optional name of the ground owner.
+   */
+  ownerName?: string;
+  /**
    * Optional contact phone number for the ground.
    */
   contactPhone?: string;
@@ -104,6 +108,7 @@ const mockGrounds: Ground[] = [
         'https://picsum.photos/seed/alpha_cricket_gallery2/600/400',
         'https://picsum.photos/seed/alpha_cricket_gallery3/600/400',
       ],
+      ownerName: 'Mr. Anil Mehta',
       contactPhone: '+1 555-0101',
       rating: 4.8,
     },
@@ -117,6 +122,7 @@ const mockGrounds: Ground[] = [
       description: 'Spacious outdoor box cricket ground with nets on all sides. Ideal for casual games and evening play.',
       amenities: ['Outdoor AstroTurf', 'Netting', 'Night Lights', 'Parking', 'Drinking Water'],
       galleryUrls: ['https://picsum.photos/seed/beta_cricket_gallery1/600/400'],
+      ownerName: 'Ms. Priya Singh',
       contactPhone: '+1 555-0102',
       rating: 4.5,
     },
@@ -133,6 +139,7 @@ const mockGrounds: Ground[] = [
         'https://picsum.photos/seed/gamma_cricket_gallery1/600/400',
         'https://picsum.photos/seed/gamma_cricket_gallery2/600/400',
       ],
+      ownerName: 'Gamma Sports Group',
       contactPhone: '+1 555-0103',
       rating: 4.6,
     },
@@ -146,6 +153,7 @@ const mockGrounds: Ground[] = [
       description: 'Dedicated pickleball courts with high-quality surface. Paddles and balls available for rent.',
       amenities: ['Hard Courts', 'Equipment Rental', 'Seating', 'Parking'],
        galleryUrls: ['https://picsum.photos/seed/delta_pickle_gallery1/600/400'],
+       ownerName: 'Mr. David Chen',
       contactPhone: '+1 555-0104',
       rating: 4.7,
     },
@@ -159,6 +167,7 @@ const mockGrounds: Ground[] = [
       description: 'Authentic beach volleyball experience right by the water. Perfect for sunny days.',
       amenities: ['Sand Court', 'Beach Access', 'Showers', 'Cafe Nearby'],
        galleryUrls: ['https://picsum.photos/seed/epsilon_volley_gallery1/600/400'],
+       ownerName: 'South Beach Rentals',
       contactPhone: '+1 555-0105',
       rating: 4.4,
     },
@@ -172,6 +181,7 @@ const mockGrounds: Ground[] = [
       description: 'Full-size indoor basketball court with adjustable hoops. Great for practice and pickup games.',
       amenities: ['Indoor Hardwood', 'Adjustable Hoops', 'Scoreboard', 'Changing Rooms'],
        galleryUrls: ['https://picsum.photos/seed/zeta_basket_gallery1/600/400'],
+       ownerName: 'City Hoops Inc.',
       contactPhone: '+1 555-0106',
       rating: 4.9,
     },
@@ -185,6 +195,7 @@ const mockGrounds: Ground[] = [
       description: 'Multiple badminton courts with excellent lighting and non-slip flooring.',
       amenities: ['Wooden Courts', 'Good Lighting', 'Rental Rackets', 'Seating'],
        galleryUrls: ['https://picsum.photos/seed/eta_badminton_gallery1/600/400'],
+       ownerName: 'Mr. Ramesh Patel',
       contactPhone: '+1 555-0107',
       rating: 4.3,
     },
@@ -201,6 +212,7 @@ const mockGrounds: Ground[] = [
           'https://picsum.photos/seed/theta_multi_gallery1/600/400',
           'https://picsum.photos/seed/theta_multi_gallery2/600/400'
         ],
+        ownerName: 'Theta Holdings',
       contactPhone: '+1 555-0108',
       rating: 4.7,
     },

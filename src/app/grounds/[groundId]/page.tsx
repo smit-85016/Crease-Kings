@@ -12,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select components
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, MapPin, DollarSign, Users, Star, Phone, CheckCircle, XCircle, Loader2, Sparkles, Trees, Sun, Wifi, ParkingCircle, ShowerHead } from 'lucide-react'; // Added more icons
+import { Calendar as CalendarIcon, Clock, MapPin, DollarSign, Users, Star, Phone, CheckCircle, XCircle, Loader2, Sparkles, Trees, Sun, Wifi, ParkingCircle, ShowerHead, Building } from 'lucide-react'; // Added Building icon for owner
 import { cn } from '@/lib/utils';
 import type { Ground, TimeSlot } from '@/services/ground-booking'; // Import TimeSlot
 import { getGroundById, getTimeSlots } from '@/services/ground-booking'; // Import new functions
@@ -280,14 +280,24 @@ export default function GroundDetailPage() {
                  </section>
               )}
 
-             {/* Contact Info */}
-             {ground.contactPhone && (
+             {/* Contact Info & Owner */}
+             {(ground.contactPhone || ground.ownerName) && (
                 <section>
-                   <h3 className="text-lg font-semibold text-foreground mb-3">Contact</h3>
-                    <p className="text-muted-foreground text-sm flex items-center gap-2">
-                     <Phone className="h-4 w-4 text-primary" />
-                     <a href={`tel:${ground.contactPhone}`} className="hover:text-primary">{ground.contactPhone}</a>
-                    </p>
+                   <h3 className="text-lg font-semibold text-foreground mb-3">Contact & Owner</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                        {ground.ownerName && (
+                             <p className="flex items-center gap-2">
+                                <Building className="h-4 w-4 text-primary flex-shrink-0" />
+                                <span>Owner: {ground.ownerName}</span>
+                             </p>
+                         )}
+                         {ground.contactPhone && (
+                            <p className="flex items-center gap-2">
+                             <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                             <a href={`tel:${ground.contactPhone}`} className="hover:text-primary">{ground.contactPhone}</a>
+                            </p>
+                         )}
+                    </div>
                 </section>
              )}
 
