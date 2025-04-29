@@ -2,7 +2,7 @@
 'use client'; // Add use client for stateful settings like toggles
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Import useEffect
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,35 +15,33 @@ export default function SettingsPage() {
   const [bookingNotifications, setBookingNotifications] = useState(true);
   const [reminderNotifications, setReminderNotifications] = useState(true);
   const [promoNotifications, setPromoNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    // Initialize dark mode based on existing class or system preference
-    if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
-    }
-    return false; // Default to light mode server-side
-  });
+  // Default dark mode state to false (light mode)
+  const [darkMode, setDarkMode] = useState(false);
 
   const handleThemeChange = (checked: boolean) => {
     setDarkMode(checked);
     // Apply/remove the dark class to the root HTML element
     if (checked) {
         document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark'); // Optional: Persist theme preference
+        localStorage.setItem('theme', 'dark'); // Persist theme preference
     } else {
         document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light'); // Optional: Persist theme preference
+        localStorage.setItem('theme', 'light'); // Persist theme preference
     }
      console.log("Dark mode toggled:", checked);
   };
 
-  // Effect to set initial theme on mount based on localStorage or system preference
-  React.useEffect(() => {
+  // Effect to set initial theme on mount based on localStorage, defaulting to light
+  useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+    // If theme is saved as 'dark', enable dark mode
+    if (savedTheme === 'dark') {
         handleThemeChange(true);
     } else {
+        // Otherwise, ensure light mode is active (default or saved as 'light')
         handleThemeChange(false);
+        // Ensure the class is removed if it was somehow added previously (e.g., by browser extensions)
+        document.documentElement.classList.remove('dark');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
@@ -127,7 +125,7 @@ export default function SettingsPage() {
                     <Sun className={`h-5 w-5 transition-colors ${!darkMode ? 'text-primary' : 'text-muted-foreground'}`} />
                     <Switch
                       id="theme-toggle"
-                      checked={darkMode}
+                      checked={darkMode} // Reflects the state, initially false
                       onCheckedChange={handleThemeChange}
                       aria-label="Toggle dark mode"
                     />
