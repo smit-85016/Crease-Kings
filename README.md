@@ -32,5 +32,5 @@ To set up the project locally, follow these steps:
 
 
 ## Project Link
-[Crease Kings](https://9000-idx-studio-1745907856666.cluster-6dx7corvpngoivimwvvljgokdw.cloudworkstations.dev)
+[Crease Kings](https://creasekings.netlify.app/)
 
